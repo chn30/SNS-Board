@@ -1,126 +1,217 @@
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-function readSrc(path: string): string {
-  return readFileSync(resolve(__dirname, '../../src', path), 'utf-8');
-}
+// Mock prisma
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
 
-describe('Auth configuration', () => {
-  it('auth.ts exports auth, signIn, signOut, and handlers', () => {
-    const src = readSrc('lib/auth.ts');
-    expect(src).toContain('export const { handlers, signIn, signOut, auth }');
+// Mock bcryptjs
+vi.mock('bcryptjs', () => ({
+  default: {
+    compare: vi.fn(),
+    hash: vi.fn(),
+  },
+}));
+
+// Mock next-auth — we need to intercept the NextAuth() call to extract config
+let capturedConfig: any = null;
+vi.mock('next-auth', () => {
+  return {
+    default: (config: any) => {
+      capturedConfig = config;
+      return {
+        handlers: {},
+        signIn: vi.fn(),
+        signOut: vi.fn(),
+        auth: vi.fn(),
+      };
+    },
+  };
+});
+
+// Mock next-auth/providers/credentials
+vi.mock('next-auth/providers/credentials', () => ({
+  default: (opts: any) => opts,
+}));
+
+// Mock next/navigation
+const mockRedirect = vi.fn();
+vi.mock('next/navigation', () => ({
+  redirect: (url: string) => {
+    mockRedirect(url);
+    throw new Error(`REDIRECT:${url}`);
+  },
+}));
+
+// Import modules after mocks
+import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+
+// Force auth.ts to be imported and executed so capturedConfig is populated
+beforeEach(async () => {
+  vi.clearAllMocks();
+  // Re-import to ensure config is captured
+  if (!capturedConfig) {
+    await import('@/lib/auth');
+  }
+});
+
+describe('authorize() behavior', () => {
+  function getAuthorize() {
+    return capturedConfig.providers[0].authorize;
+  }
+
+  it('returns user with id and role for valid credentials', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue({
+      id: 'user-1',
+      email: 'test@test.com',
+      password: 'hashed-pw',
+      role: 'USER',
+    });
+    (bcrypt.compare as any).mockResolvedValue(true);
+
+    const result = await getAuthorize()({
+      email: 'test@test.com',
+      password: 'secret',
+    });
+
+    expect(result).toEqual({ id: 'user-1', role: 'USER' });
+    expect(result).not.toHaveProperty('email');
+    expect(result).not.toHaveProperty('ssoId');
   });
 
-  it('auth.ts uses JWT strategy with userId and role only (no email, no ssoId)', () => {
-    const src = readSrc('lib/auth.ts');
-    expect(src).toContain("strategy: 'jwt'");
-    expect(src).toContain('token.userId = user.id');
-    expect(src).toContain('token.role');
-    // Iron Law: no email or ssoId in token
-    expect(src).not.toMatch(/token\.email\s*=/);
-    expect(src).not.toMatch(/token\.ssoId\s*=/);
+  it('returns null for wrong password', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue({
+      id: 'user-1',
+      email: 'test@test.com',
+      password: 'hashed-pw',
+      role: 'USER',
+    });
+    (bcrypt.compare as any).mockResolvedValue(false);
+
+    const result = await getAuthorize()({
+      email: 'test@test.com',
+      password: 'wrong',
+    });
+    expect(result).toBeNull();
   });
 
-  it('auth.ts authorize validates credentials with bcrypt and returns only id+role', () => {
-    const src = readSrc('lib/auth.ts');
-    expect(src).toContain('bcrypt.compare');
-    expect(src).toContain('prisma.user.findUnique');
-    // Return object should have id and role only
-    expect(src).toContain('return { id: user.id, role: user.role }');
+  it('returns null for unknown email', async () => {
+    (prisma.user.findUnique as any).mockResolvedValue(null);
+
+    const result = await getAuthorize()({
+      email: 'noone@test.com',
+      password: 'secret',
+    });
+    expect(result).toBeNull();
   });
 
-  it('auth.ts configures /login as custom sign-in page', () => {
-    const src = readSrc('lib/auth.ts');
-    expect(src).toContain("signIn: '/login'");
-  });
-
-  it('session callback populates session.user.id and session.user.role', () => {
-    const src = readSrc('lib/auth.ts');
-    expect(src).toContain('session.user.id = token.userId');
-    expect(src).toContain('role = token.role');
+  it('returns null when email or password is missing', async () => {
+    const authorize = getAuthorize();
+    expect(await authorize({ email: '', password: 'x' })).toBeNull();
+    expect(await authorize({ email: 'x', password: '' })).toBeNull();
   });
 });
 
-describe('Auth route handler', () => {
-  it('API route re-exports GET and POST from auth handlers', () => {
-    const src = readSrc('app/api/auth/[...nextauth]/route.ts');
-    expect(src).toContain("import { handlers } from '@/lib/auth'");
-    expect(src).toContain('export const { GET, POST } = handlers');
+describe('JWT callback', () => {
+  it('populates token with userId and role from user, without email or ssoId', () => {
+    const jwt = capturedConfig.callbacks.jwt;
+    const token = jwt({ token: {}, user: { id: 'u1', role: 'ADMIN' } });
+
+    expect(token.userId).toBe('u1');
+    expect(token.role).toBe('ADMIN');
+    expect(token).not.toHaveProperty('email');
+    expect(token).not.toHaveProperty('ssoId');
+  });
+
+  it('returns token unchanged when no user (subsequent calls)', () => {
+    const jwt = capturedConfig.callbacks.jwt;
+    const token = jwt({
+      token: { userId: 'u1', role: 'USER' },
+      user: undefined,
+    });
+
+    expect(token.userId).toBe('u1');
+    expect(token.role).toBe('USER');
   });
 });
 
-describe('Type augmentation', () => {
-  it('next-auth.d.ts augments User with role and JWT with userId+role', () => {
-    const src = readSrc('types/next-auth.d.ts');
-    expect(src).toContain('role');
-    expect(src).toContain('userId');
-    expect(src).toContain("declare module 'next-auth'");
-    expect(src).toContain("declare module 'next-auth/jwt'");
+describe('Session callback', () => {
+  it('populates session.user.id and session.user.role from token', () => {
+    const sessionCb = capturedConfig.callbacks.session;
+    const session = { user: { id: '', name: '' } as any };
+    const result = sessionCb({
+      session,
+      token: { userId: 'u1', role: 'ADMIN' },
+    });
+
+    expect(result.user.id).toBe('u1');
+    expect(result.user.role).toBe('ADMIN');
   });
 });
 
-describe('Middleware', () => {
-  it('middleware.ts exports auth as middleware with correct matcher', () => {
-    const src = readSrc('middleware.ts');
-    expect(src).toContain("export { auth as middleware } from '@/lib/auth'");
-    expect(src).toContain('login|api/auth|_next|favicon');
+describe('Authorized callback (middleware protection)', () => {
+  it('returns true when user is authenticated', () => {
+    const authorized = capturedConfig.callbacks.authorized;
+    expect(authorized({ auth: { user: { id: 'u1' } } })).toBe(true);
   });
 
-  it('matcher pattern excludes login, api/auth, _next, and favicon', () => {
-    const src = readSrc('middleware.ts');
-    const matcherMatch = src.match(/matcher:\s*\[([^\]]*)\]/);
-    expect(matcherMatch).not.toBeNull();
-    const matcher = matcherMatch![1];
-    expect(matcher).toContain('login');
-    expect(matcher).toContain('api/auth');
-    expect(matcher).toContain('_next');
-    expect(matcher).toContain('favicon');
+  it('returns false when auth is null (unauthenticated)', () => {
+    const authorized = capturedConfig.callbacks.authorized;
+    expect(authorized({ auth: null })).toBe(false);
+  });
+
+  it('returns false when auth.user is missing', () => {
+    const authorized = capturedConfig.callbacks.authorized;
+    expect(authorized({ auth: {} })).toBe(false);
   });
 });
 
-describe('Auth utilities', () => {
-  it('auth-utils.ts exports getCurrentUser, requireAuth, requireAdmin', () => {
-    const src = readSrc('lib/auth-utils.ts');
-    expect(src).toContain('export async function getCurrentUser');
-    expect(src).toContain('export async function requireAuth');
-    expect(src).toContain('export async function requireAdmin');
+describe('Auth utilities - requireAuth', () => {
+  it('redirects to /login when no session', async () => {
+    // We need to mock auth() for auth-utils
+    const { auth } = await import('@/lib/auth');
+    (auth as any).mockResolvedValue(null);
+
+    const { requireAuth } = await import('@/lib/auth-utils');
+
+    await expect(requireAuth()).rejects.toThrow('REDIRECT:/login');
+    expect(mockRedirect).toHaveBeenCalledWith('/login');
   });
 
-  it('requireAuth redirects to /login when no session', () => {
-    const src = readSrc('lib/auth-utils.ts');
-    expect(src).toContain("redirect('/login')");
-  });
+  it('returns user when session exists', async () => {
+    const { auth } = await import('@/lib/auth');
+    (auth as any).mockResolvedValue({ user: { id: 'u1', role: 'USER' } });
 
-  it('requireAdmin checks for ADMIN role and redirects non-admins', () => {
-    const src = readSrc('lib/auth-utils.ts');
-    expect(src).toContain("'ADMIN'");
-    expect(src).toContain("redirect('/')");
+    const { requireAuth } = await import('@/lib/auth-utils');
+    const user = await requireAuth();
+
+    expect(user).toEqual({ id: 'u1', role: 'USER' });
   });
 });
 
-describe('Login page', () => {
-  it('login page uses signIn from next-auth/react with credentials provider', () => {
-    const src = readSrc('app/(auth)/login/page.tsx');
-    expect(src).toContain("signIn('credentials'");
-    expect(src).toContain("'use client'");
+describe('Auth utilities - requireAdmin', () => {
+  it('redirects non-admin users to /', async () => {
+    const { auth } = await import('@/lib/auth');
+    (auth as any).mockResolvedValue({ user: { id: 'u1', role: 'USER' } });
+
+    const { requireAdmin } = await import('@/lib/auth-utils');
+
+    await expect(requireAdmin()).rejects.toThrow('REDIRECT:/');
+    expect(mockRedirect).toHaveBeenCalledWith('/');
   });
 
-  it('login page has email and password inputs with test IDs', () => {
-    const src = readSrc('app/(auth)/login/page.tsx');
-    expect(src).toContain('data-testid="login-email"');
-    expect(src).toContain('data-testid="login-password"');
-    expect(src).toContain('data-testid="login-submit"');
-  });
+  it('returns user for admin role', async () => {
+    const { auth } = await import('@/lib/auth');
+    (auth as any).mockResolvedValue({ user: { id: 'u1', role: 'ADMIN' } });
 
-  it('login page displays error message for invalid credentials', () => {
-    const src = readSrc('app/(auth)/login/page.tsx');
-    expect(src).toContain('data-testid="login-error"');
-    expect(src).toContain('setError');
-  });
+    const { requireAdmin } = await import('@/lib/auth-utils');
+    const user = await requireAdmin();
 
-  it('login page redirects to / on successful login', () => {
-    const src = readSrc('app/(auth)/login/page.tsx');
-    expect(src).toContain("redirectTo: '/'");
+    expect(user).toEqual({ id: 'u1', role: 'ADMIN' });
   });
 });
