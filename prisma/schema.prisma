@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Category {
+  FREE
+  QUESTION
+  INFO
+}
+
+enum TargetType {
+  POST
+  COMMENT
+}
+
+enum ReportReason {
+  ABUSE
+  SPAM
+  INAPPROPRIATE
+  PRIVACY
+  OTHER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  ssoId     String   @unique
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts     Post[]
+  comments  Comment[]
+  likes     Like[]
+  reports   Report[]
+  adminLogs AdminLog[]
+}
+
+model Post {
+  id           String   @id @default(uuid())
+  authorId     String
+  title        String   @db.VarChar(200)
+  content      String   @db.VarChar(5000)
+  category     Category
+  isDeleted    Boolean  @default(false)
+  isHidden     Boolean  @default(false)
+  likeCount    Int      @default(0)
+  commentCount Int      @default(0)
+  viewCount    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  comments Comment[]
+
+  @@index([createdAt])
+  @@index([category])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  authorId  String
+  postId    String
+  content   String   @db.VarChar(2000)
+  isDeleted Boolean  @default(false)
+  likeCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  author User @relation(fields: [authorId], references: [id])
+  post   Post @relation(fields: [postId], references: [id])
+
+  @@index([postId])
+}
+
+model Like {
+  id         String     @id @default(uuid())
+  userId     String
+  targetType TargetType
+  targetId   String
+  createdAt  DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model Report {
+  id         String       @id @default(uuid())
+  reporterId String
+  targetType TargetType
+  targetId   String
+  reason     ReportReason
+  createdAt  DateTime     @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id])
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([targetType, targetId])
+}
+
+model AdminLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([createdAt])
+}

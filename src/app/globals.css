@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #05050a;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-border: rgba(255, 255, 255, 0.06);
+  --primary: #8b5cf6;
+  --primary-pink: #ec4899;
+  --accent: #a78bfa;
+  --text-primary: #e2e8f0;
+  --text-secondary: #8892b0;
+  --text-muted: #64748b;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  backdrop-filter: blur(12px);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-pink));
+}
+
+.glow-primary {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-pink));
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 8px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+}
+
+.hot-badge {
+  color: #f87171;
+  animation: hot-glow 2s infinite;
+}
+
+@keyframes hot-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.8);
+  }
+}

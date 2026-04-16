@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS Board Mockup A — Clean Minimal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #f8fafc; font-family: 'Pretendard', -apple-system, system-ui, sans-serif; color: #1e293b; }
+  .phone { max-width: 420px; margin: 20px auto; border: 2px solid #e2e8f0; border-radius: 24px; overflow: hidden; background: #fff; min-height: 800px; }
+  /* Header */
+  .header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 18px; font-weight: 700; color: #0f172a; }
+  .header .write-btn { background: #3b82f6; color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #e2e8f0; background: #fff; }
+  .tab { flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 500; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab.active { color: #3b82f6; border-bottom-color: #3b82f6; }
+  /* Category Filter */
+  .cats { display: flex; gap: 8px; padding: 12px 20px; overflow-x: auto; }
+  .cat { padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 500; border: 1px solid #e2e8f0; color: #64748b; cursor: pointer; white-space: nowrap; }
+  .cat.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  /* Feed */
+  .feed { padding: 0; }
+  .post { padding: 20px; border-bottom: 1px solid #f1f5f9; }
+  .post-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .anon-name { font-size: 13px; font-weight: 600; color: #475569; }
+  .post-time { font-size: 11px; color: #94a3b8; margin-left: auto; }
+  .post-cat { font-size: 10px; background: #eff6ff; color: #3b82f6; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .post-title { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+  .post-body { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .post-actions { display: flex; gap: 16px; }
+  .action { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #94a3b8; cursor: pointer; }
+  .action:hover { color: #3b82f6; }
+  .action.liked { color: #ef4444; }
+  /* Label */
+  .label { text-align: center; padding: 20px; color: #94a3b8; font-size: 12px; }
+</style>
+</head>
+<body>
+<p style="text-align:center;padding:16px;color:#64748b;font-size:14px;font-weight:600;">Mockup A: Clean Minimal — 깔끔하고 미니멀한 카드 피드</p>
+<div class="phone">
+  <div class="header">
+    <h1>익명 게시판</h1>
+    <button class="write-btn">+ 글쓰기</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active">최신</div>
+    <div class="tab">인기</div>
+  </div>
+  <div class="cats">
+    <div class="cat active">전체</div>
+    <div class="cat">자유</div>
+    <div class="cat">질문</div>
+    <div class="cat">정보</div>
+  </div>
+  <div class="feed">
+    <div class="post">
+      <div class="post-meta">
+        <div class="avatar">👤</div>
+        <span class="anon-name">익명</span>
+        <span class="post-cat">자유</span>
+        <span class="post-time">5분 전</span>
+      </div>
+      <div class="post-title">구내식당 메뉴 개선 건의합니다</div>
+      <div class="post-body">매일 같은 메뉴가 반복되는 것 같아서요. 다양한 메뉴 옵션이 있으면 좋겠습니다. 특히 채식 옵션이 추가되면 좋겠어요.</div>
+      <div class="post-actions">
+        <div class="action liked">❤️ 24</div>
+        <div class="action">💬 8</div>
+        <div class="action">🚨</div>
+      </div>
+    </div>
+    <div class="post">
+      <div class="post-meta">
+        <div class="avatar">👤</div>
+        <span class="anon-name">익명</span>
+        <span class="post-cat">질문</span>
+        <span class="post-time">23분 전</span>
+      </div>
+      <div class="post-title">연차 신청 시스템 어디서 하나요?</div>
+      <div class="post-body">입사한지 얼마 안 돼서 잘 모르겠는데, 연차 신청을 어느 시스템에서 해야 하나요? HR 포탈인가요?</div>
+      <div class="post-actions">
+        <div class="action">❤️ 3</div>
+        <div class="action">💬 12</div>
+        <div class="action">🚨</div>
+      </div>
+    </div>
+    <div class="post">
+      <div class="post-meta">
+        <div class="avatar">👤</div>
+        <span class="anon-name">익명</span>
+        <span class="post-cat">정보</span>
+        <span class="post-time">1시간 전</span>
+      </div>
+      <div class="post-title">이번 주 금요일 전사 타운홀 안내</div>
+      <div class="post-body">이번 주 금요일 오후 3시에 대강당에서 전사 타운홀 미팅이 있습니다. 참석 필수이니 일정 확인해주세요.</div>
+      <div class="post-actions">
+        <div class="action">❤️ 45</div>
+        <div class="action">💬 5</div>
+        <div class="action">🚨</div>
+      </div>
+    </div>
+    <div class="post">
+      <div class="post-meta">
+        <div class="avatar">👤</div>
+        <span class="anon-name">익명</span>
+        <span class="post-cat">자유</span>
+        <span class="post-time">2시간 전</span>
+      </div>
+      <div class="post-title">회사 근처 맛집 추천해주세요</div>
+      <div class="post-body">점심시간에 갈 만한 괜찮은 식당 있을까요? 한식 위주로 추천 부탁드립니다.</div>
+      <div class="post-actions">
+        <div class="action">❤️ 15</div>
+        <div class="action">💬 21</div>
+        <div class="action">🚨</div>
+      </div>
+    </div>
+  </div>
+  <div class="label">더 보기 로딩 중...</div>
+</div>
+</body>
+</html>

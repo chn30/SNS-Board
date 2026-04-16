@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS Board Mockup C — Twitter-style Compact</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #fff; font-family: 'Pretendard', -apple-system, system-ui, sans-serif; color: #0f1419; }
+  .phone { max-width: 420px; margin: 20px auto; border: 1px solid #eff3f4; border-radius: 24px; overflow: hidden; background: #fff; min-height: 800px; }
+  /* Header */
+  .header { padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eff3f4; backdrop-filter: blur(12px); background: rgba(255,255,255,0.85); }
+  .logo { width: 32px; height: 32px; background: #1d9bf0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; }
+  .header h1 { font-size: 18px; font-weight: 700; flex: 1; }
+  .header .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .header .icon-btn:hover { background: #eff3f4; }
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid #eff3f4; }
+  .tab { flex: 1; text-align: center; padding: 14px 0; font-size: 14px; font-weight: 500; color: #536471; cursor: pointer; position: relative; }
+  .tab.active { font-weight: 700; color: #0f1419; }
+  .tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 56px; height: 4px; border-radius: 2px; background: #1d9bf0; }
+  /* Posts */
+  .post { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #eff3f4; cursor: pointer; transition: background 0.15s; }
+  .post:hover { background: #f7f9f9; }
+  .post-avatar { width: 40px; height: 40px; border-radius: 50%; background: #cfd9de; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #536471; }
+  .post-content { flex: 1; min-width: 0; }
+  .post-header { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+  .post-author { font-size: 14px; font-weight: 700; color: #0f1419; }
+  .post-handle { font-size: 13px; color: #536471; }
+  .post-dot { color: #536471; font-size: 13px; }
+  .post-time { font-size: 13px; color: #536471; }
+  .post-cat-tag { font-size: 11px; font-weight: 600; color: #1d9bf0; background: #e8f5fd; padding: 1px 8px; border-radius: 10px; margin-left: 4px; }
+  .post-text { font-size: 14px; line-height: 1.5; color: #0f1419; margin-bottom: 10px; }
+  .post-actions { display: flex; justify-content: space-between; max-width: 300px; }
+  .p-action { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #536471; cursor: pointer; padding: 4px; border-radius: 50px; }
+  .p-action:hover { color: #1d9bf0; background: rgba(29,155,240,0.1); }
+  .p-action.like:hover, .p-action.like.active { color: #f91880; background: rgba(249,24,128,0.1); }
+  .p-action.report:hover { color: #ff6f00; background: rgba(255,111,0,0.1); }
+  /* FAB */
+  .fab { position: fixed; bottom: 80px; right: calc(50% - 190px); width: 56px; height: 56px; border-radius: 50%; background: #1d9bf0; color: #fff; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(29,155,240,0.4); display: flex; align-items: center; justify-content: center; }
+  .label { text-align: center; padding: 16px; color: #536471; font-size: 13px; }
+</style>
+</head>
+<body>
+<p style="text-align:center;padding:16px;color:#536471;font-size:14px;font-weight:600;">Mockup C: Twitter-style Compact — 트위터풍 타임라인</p>
+<div class="phone">
+  <div class="header">
+    <div class="logo">B</div>
+    <h1>Board</h1>
+    <button class="icon-btn">⚙️</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active">추천</div>
+    <div class="tab">최신</div>
+  </div>
+  <div class="post">
+    <div class="post-avatar">👤</div>
+    <div class="post-content">
+      <div class="post-header">
+        <span class="post-author">익명</span>
+        <span class="post-dot">·</span>
+        <span class="post-time">5분</span>
+        <span class="post-cat-tag">자유</span>
+      </div>
+      <div class="post-text">구내식당 메뉴 개선 건의합니다. 매일 같은 메뉴가 반복되는 것 같아서요. 다양한 메뉴 옵션이 있으면 좋겠습니다. 특히 채식 옵션이 추가되면 좋겠어요.</div>
+      <div class="post-actions">
+        <div class="p-action">💬 8</div>
+        <div class="p-action like active">❤️ 24</div>
+        <div class="p-action">📊 142</div>
+        <div class="p-action report">⚑</div>
+      </div>
+    </div>
+  </div>
+  <div class="post">
+    <div class="post-avatar">👤</div>
+    <div class="post-content">
+      <div class="post-header">
+        <span class="post-author">익명</span>
+        <span class="post-dot">·</span>
+        <span class="post-time">23분</span>
+        <span class="post-cat-tag">질문</span>
+      </div>
+      <div class="post-text">연차 신청 시스템 어디서 하나요? 입사한지 얼마 안 돼서 잘 모르겠는데, HR 포탈인가요?</div>
+      <div class="post-actions">
+        <div class="p-action">💬 12</div>
+        <div class="p-action like">❤️ 3</div>
+        <div class="p-action">📊 89</div>
+        <div class="p-action report">⚑</div>
+      </div>
+    </div>
+  </div>
+  <div class="post">
+    <div class="post-avatar">👤</div>
+    <div class="post-content">
+      <div class="post-header">
+        <span class="post-author">익명</span>
+        <span class="post-dot">·</span>
+        <span class="post-time">1시간</span>
+        <span class="post-cat-tag">정보</span>
+      </div>
+      <div class="post-text">이번 주 금요일 전사 타운홀 안내 — 오후 3시 대강당. 참석 필수이니 일정 확인해주세요.</div>
+      <div class="post-actions">
+        <div class="p-action">💬 5</div>
+        <div class="p-action like">❤️ 45</div>
+        <div class="p-action">📊 320</div>
+        <div class="p-action report">⚑</div>
+      </div>
+    </div>
+  </div>
+  <div class="post">
+    <div class="post-avatar">👤</div>
+    <div class="post-content">
+      <div class="post-header">
+        <span class="post-author">익명</span>
+        <span class="post-dot">·</span>
+        <span class="post-time">2시간</span>
+        <span class="post-cat-tag">자유</span>
+      </div>
+      <div class="post-text">회사 근처 맛집 추천해주세요. 점심시간에 갈 만한 괜찮은 식당 있을까요? 한식 위주로 부탁드립니다.</div>
+      <div class="post-actions">
+        <div class="p-action">💬 21</div>
+        <div class="p-action like">❤️ 15</div>
+        <div class="p-action">📊 201</div>
+        <div class="p-action report">⚑</div>
+      </div>
+    </div>
+  </div>
+  <div class="label">더 보기</div>
+</div>
+<button class="fab">+</button>
+</body>
+</html>

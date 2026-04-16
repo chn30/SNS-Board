@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS Board Mockup B — Dark Card</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; font-family: 'Pretendard', -apple-system, system-ui, sans-serif; color: #e2e8f0; }
+  .phone { max-width: 420px; margin: 20px auto; border: 2px solid #1e293b; border-radius: 24px; overflow: hidden; background: #0f172a; min-height: 800px; }
+  .header { background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 20px; font-weight: 700; background: linear-gradient(90deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header .write-btn { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #fff; border: none; border-radius: 24px; padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+  .tabs { display: flex; gap: 8px; padding: 0 20px 16px; }
+  .tab { padding: 8px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; color: #64748b; background: #1e293b; cursor: pointer; }
+  .tab.active { background: #3b82f6; color: #fff; }
+  .feed { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: #1e293b; border-radius: 16px; padding: 18px; border: 1px solid #334155; transition: border-color 0.2s; }
+  .card:hover { border-color: #3b82f6; }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; }
+  .info { flex: 1; }
+  .anon { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .time { font-size: 11px; color: #64748b; }
+  .cat-badge { font-size: 10px; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+  .cat-free { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .cat-question { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .cat-info { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .card-title { font-size: 15px; font-weight: 600; color: #f1f5f9; margin-bottom: 6px; }
+  .card-body { font-size: 13px; color: #94a3b8; line-height: 1.6; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-footer { display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid #334155; }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; cursor: pointer; }
+  .stat:hover { color: #e2e8f0; }
+  .stat.liked { color: #f87171; }
+  .label { text-align: center; padding: 20px; color: #475569; font-size: 12px; }
+</style>
+</head>
+<body>
+<p style="text-align:center;padding:16px;color:#94a3b8;font-size:14px;font-weight:600;">Mockup B: Dark Card — 다크 테마 + 카드 UI</p>
+<div class="phone">
+  <div class="header">
+    <h1>HQ Board</h1>
+    <button class="write-btn">✏️ 새 글</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active">🔥 인기</div>
+    <div class="tab">🕐 최신</div>
+    <div class="tab">💬 자유</div>
+    <div class="tab">❓ 질문</div>
+    <div class="tab">ℹ️ 정보</div>
+  </div>
+  <div class="feed">
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">?</div>
+        <div class="info"><div class="anon">익명</div><div class="time">5분 전</div></div>
+        <span class="cat-badge cat-free">자유</span>
+      </div>
+      <div class="card-title">구내식당 메뉴 개선 건의합니다</div>
+      <div class="card-body">매일 같은 메뉴가 반복되는 것 같아서요. 다양한 메뉴 옵션이 있으면 좋겠습니다.</div>
+      <div class="card-footer">
+        <div class="stat liked">❤️ 24</div>
+        <div class="stat">💬 8</div>
+        <div class="stat" style="margin-left:auto">⚑</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">?</div>
+        <div class="info"><div class="anon">익명</div><div class="time">23분 전</div></div>
+        <span class="cat-badge cat-question">질문</span>
+      </div>
+      <div class="card-title">연차 신청 시스템 어디서 하나요?</div>
+      <div class="card-body">입사한지 얼마 안 돼서 잘 모르겠는데, 연차 신청을 어느 시스템에서 해야 하나요?</div>
+      <div class="card-footer">
+        <div class="stat">❤️ 3</div>
+        <div class="stat">💬 12</div>
+        <div class="stat" style="margin-left:auto">⚑</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">?</div>
+        <div class="info"><div class="anon">익명</div><div class="time">1시간 전</div></div>
+        <span class="cat-badge cat-info">정보</span>
+      </div>
+      <div class="card-title">이번 주 금요일 전사 타운홀 안내</div>
+      <div class="card-body">이번 주 금요일 오후 3시에 대강당에서 전사 타운홀 미팅이 있습니다.</div>
+      <div class="card-footer">
+        <div class="stat">❤️ 45</div>
+        <div class="stat">💬 5</div>
+        <div class="stat" style="margin-left:auto">⚑</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="avatar">?</div>
+        <div class="info"><div class="anon">익명</div><div class="time">2시간 전</div></div>
+        <span class="cat-badge cat-free">자유</span>
+      </div>
+      <div class="card-title">회사 근처 맛집 추천해주세요</div>
+      <div class="card-body">점심시간에 갈 만한 괜찮은 식당 있을까요? 한식 위주로 추천 부탁드립니다.</div>
+      <div class="card-footer">
+        <div class="stat">❤️ 15</div>
+        <div class="stat">💬 21</div>
+        <div class="stat" style="margin-left:auto">⚑</div>
+      </div>
+    </div>
+  </div>
+  <div class="label">스크롤하여 더 보기</div>
+</div>
+</body>
+</html>

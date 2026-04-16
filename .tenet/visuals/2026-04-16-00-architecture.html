@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS Board - Architecture Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; padding: 40px; }
+  h1 { text-align: center; margin-bottom: 8px; font-size: 24px; color: #e2e8f0; }
+  .subtitle { text-align: center; color: #94a3b8; margin-bottom: 32px; font-size: 14px; }
+  .container { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+  svg text { font-family: 'Segoe UI', system-ui, sans-serif; }
+  .tooltip { display: none; position: absolute; background: #1e293b; border: 1px solid #3b82f6; border-radius: 8px; padding: 12px 16px; color: #e2e8f0; font-size: 13px; max-width: 280px; z-index: 10; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+  .legend { display: flex; gap: 24px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
+  .legend-color { width: 16px; height: 16px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>사내 익명 SNS 게시판 — 시스템 아키텍처</h1>
+<p class="subtitle">Next.js (App Router) + Prisma ORM + PostgreSQL</p>
+
+<div class="container">
+<svg width="900" height="620" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/>
+    </marker>
+    <filter id="glow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Client Layer -->
+  <rect x="30" y="30" width="840" height="100" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.5"/>
+  <text x="50" y="55" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1">CLIENT LAYER</text>
+
+  <rect x="80" y="65" width="150" height="50" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="모바일/PC 반응형 UI. Tailwind CSS 기반. 무한스크롤 피드."/>
+  <text x="155" y="95" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="500">📱 Mobile Web</text>
+
+  <rect x="280" y="65" width="150" height="50" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="PC 브라우저. 동일한 Next.js 앱, 반응형으로 레이아웃 전환."/>
+  <text x="355" y="95" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="500">🖥️ Desktop Web</text>
+
+  <rect x="530" y="65" width="150" height="50" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2" filter="url(#glow)" class="node" data-info="관리자 전용 인터페이스. 게시글/댓글 삭제, 신고 관리, 사용자 관리."/>
+  <text x="605" y="95" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="500">🔧 Admin Panel</text>
+
+  <rect x="730" y="65" width="120" height="50" rx="8" fill="#1e293b" stroke="#8b5cf6" stroke-width="2" filter="url(#glow)" class="node" data-info="사내 SAML/OIDC SSO. MVP에서는 NextAuth mock provider 사용."/>
+  <text x="790" y="95" text-anchor="middle" fill="#f8fafc" font-size="13" font-weight="500">🔑 SSO IdP</text>
+
+  <!-- Next.js App -->
+  <rect x="30" y="170" width="840" height="140" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.5"/>
+  <text x="50" y="195" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1">NEXT.JS APPLICATION (App Router)</text>
+
+  <rect x="60" y="210" width="160" height="50" rx="8" fill="#172554" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="React Server Components. 피드, 게시글 상세, 프로필 등 페이지 렌더링."/>
+  <text x="140" y="240" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="500">Pages (RSC)</text>
+
+  <rect x="250" y="210" width="160" height="50" rx="8" fill="#172554" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="Server Actions로 구현. 게시글 CRUD, 댓글, 공감, 신고 처리."/>
+  <text x="330" y="240" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="500">Server Actions</text>
+
+  <rect x="440" y="210" width="160" height="50" rx="8" fill="#172554" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="NextAuth.js v5. SSO 연동, 세션 관리, 역할(role) 기반 접근 제어."/>
+  <text x="520" y="240" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="500">Auth (NextAuth)</text>
+
+  <rect x="630" y="210" width="160" height="50" rx="8" fill="#172554" stroke="#3b82f6" stroke-width="2" filter="url(#glow)" class="node" data-info="Next.js Middleware. 인증 확인, 관리자 권한 체크, rate limiting."/>
+  <text x="710" y="240" text-anchor="middle" fill="#93c5fd" font-size="12" font-weight="500">Middleware</text>
+
+  <rect x="60" y="270" width="350" height="30" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="235" y="290" text-anchor="middle" fill="#94a3b8" font-size="11">Shared: Validation (Zod) | Error Handling | Rate Limiting</text>
+
+  <!-- Data Layer -->
+  <rect x="30" y="350" width="840" height="100" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.5"/>
+  <text x="50" y="375" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1">DATA LAYER</text>
+
+  <rect x="200" y="385" width="200" height="50" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="2" filter="url(#glow)" class="node" data-info="Prisma ORM. 타입 안전 쿼리. 마이그레이션 관리. Soft delete 패턴."/>
+  <text x="300" y="415" text-anchor="middle" fill="#86efac" font-size="13" font-weight="500">Prisma ORM</text>
+
+  <rect x="500" y="385" width="200" height="50" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="2" filter="url(#glow)" class="node" data-info="PostgreSQL 16+. User, Post, Comment, Like, Report, AdminLog 테이블."/>
+  <text x="600" y="415" text-anchor="middle" fill="#86efac" font-size="13" font-weight="500">PostgreSQL 16+</text>
+
+  <!-- ERD Summary -->
+  <rect x="30" y="490" width="840" height="110" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.5"/>
+  <text x="50" y="515" fill="#64748b" font-size="11" font-weight="600" letter-spacing="1">DATA MODEL (ERD)</text>
+
+  <rect x="50" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="100" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">User</text>
+  <text x="100" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">id, ssoId, role</text>
+
+  <rect x="190" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="240" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">Post</text>
+  <text x="240" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">title, content, cat</text>
+
+  <rect x="330" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="380" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">Comment</text>
+  <text x="380" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">content, postId</text>
+
+  <rect x="470" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="520" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">Like</text>
+  <text x="520" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">userId, targetId</text>
+
+  <rect x="610" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="660" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">Report</text>
+  <text x="660" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">reason, targetId</text>
+
+  <rect x="750" y="530" width="100" height="55" rx="6" fill="#312e81" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="800" y="552" text-anchor="middle" fill="#c7d2fe" font-size="11" font-weight="600">AdminLog</text>
+  <text x="800" y="572" text-anchor="middle" fill="#a5b4fc" font-size="9">action, adminId</text>
+
+  <!-- ERD Relations -->
+  <line x1="150" y1="557" x2="190" y2="557" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="290" y1="557" x2="330" y2="557" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="430" y1="557" x2="470" y2="557" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="570" y1="557" x2="610" y2="557" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="710" y1="557" x2="750" y2="557" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Connections: Client → Next.js -->
+  <path d="M 155 115 L 155 170 L 140 210" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 355 115 L 355 170 L 330 210" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#arrow-blue)"/>
+  <path d="M 605 115 L 605 170 L 520 210" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- SSO → Auth -->
+  <path d="M 790 115 L 790 170 L 560 210" stroke="#8b5cf6" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- Next.js → Data -->
+  <path d="M 330 260 L 300 385" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#arrow-green)"/>
+  <path d="M 400 410 L 500 410" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#arrow-green)"/>
+</svg>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-color" style="background:#3b82f6"></div>Frontend / Client</div>
+  <div class="legend-item"><div class="legend-color" style="background:#172554;border:1px solid #3b82f6"></div>Next.js Server</div>
+  <div class="legend-item"><div class="legend-color" style="background:#14532d;border:1px solid #22c55e"></div>Data Layer</div>
+  <div class="legend-item"><div class="legend-color" style="background:#312e81;border:1px solid #6366f1"></div>Data Models</div>
+  <div class="legend-item"><div class="legend-color" style="background:#f59e0b"></div>Admin</div>
+  <div class="legend-item"><div class="legend-color" style="background:#8b5cf6"></div>SSO Auth</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const tooltip = document.getElementById('tooltip');
+document.querySelectorAll('.node').forEach(node => {
+  node.addEventListener('mouseenter', e => {
+    const info = node.getAttribute('data-info');
+    if (!info) return;
+    tooltip.textContent = info;
+    tooltip.style.display = 'block';
+    const rect = node.getBoundingClientRect();
+    tooltip.style.left = rect.left + 'px';
+    tooltip.style.top = (rect.bottom + 8) + 'px';
+  });
+  node.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+});
+</script>
+</body>
+</html>

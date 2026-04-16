@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS Board Mockup F — Light Dopamine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; color: #1e293b; min-height: 100vh; background: #fafbff; }
+
+  .layout { display: grid; grid-template-columns: 260px 1fr 320px; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { background: #fff; border-right: 1px solid #eef2ff; padding: 20px 14px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100vh; }
+  .brand { font-size: 24px; font-weight: 900; padding: 12px 14px 28px; color: #4f46e5; }
+  .brand span { background: linear-gradient(135deg, #6366f1, #ec4899, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 12px; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; }
+  .nav-item:hover { background: #f5f3ff; color: #4f46e5; }
+  .nav-item.active { background: linear-gradient(135deg, #eef2ff, #fdf2f8); color: #6366f1; font-weight: 700; }
+  .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+  .nav-item .cnt { margin-left: auto; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 8px; min-width: 20px; text-align: center; }
+  .write-btn { margin-top: 20px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(99,102,241,0.25); transition: all 0.3s; }
+  .write-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+  .sidebar-bottom { margin-top: auto; padding: 14px; border-top: 1px solid #eef2ff; display: flex; align-items: center; gap: 10px; }
+  .sb-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #ec4899); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
+  .sb-info { font-size: 13px; color: #94a3b8; }
+  .sb-name { font-size: 13px; font-weight: 600; color: #1e293b; }
+
+  /* Main */
+  .main { overflow-y: auto; background: #fafbff; }
+  .main-header { position: sticky; top: 0; z-index: 10; background: rgba(250,251,255,0.9); backdrop-filter: blur(16px); padding: 20px 28px 0; border-bottom: 1px solid #eef2ff; }
+  .mh-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .main-title { font-size: 24px; font-weight: 900; color: #1e293b; }
+  .tabs { display: flex; gap: 4px; padding-bottom: 0; }
+  .tab { padding: 10px 20px; border-radius: 10px 10px 0 0; font-size: 13px; font-weight: 600; color: #94a3b8; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; }
+  .tab.active { color: #6366f1; border-bottom-color: #6366f1; background: rgba(99,102,241,0.05); }
+
+  /* Category pills */
+  .cats { display: flex; gap: 8px; padding: 14px 28px; }
+  .cp { padding: 7px 18px; border-radius: 22px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.25s; border: none; }
+  .cp.all { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 2px 10px rgba(99,102,241,0.3); }
+  .cp:not(.all) { background: #fff; color: #64748b; border: 1px solid #e2e8f0; }
+  .cp:not(.all):hover { border-color: #6366f1; color: #6366f1; background: #f5f3ff; }
+
+  /* Posts */
+  .feed { padding: 0 28px 28px; display: flex; flex-direction: column; gap: 14px; }
+  .post { background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; transition: all 0.3s; cursor: pointer; }
+  .post:hover { box-shadow: 0 8px 30px rgba(99,102,241,0.1); border-color: #c7d2fe; transform: translateY(-2px); }
+  .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .post-avatar { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #fff; flex-shrink: 0; }
+  .av1 { background: linear-gradient(135deg, #f87171, #fb923c); }
+  .av2 { background: linear-gradient(135deg, #fbbf24, #a3e635); }
+  .av3 { background: linear-gradient(135deg, #34d399, #22d3ee); }
+  .av4 { background: linear-gradient(135deg, #818cf8, #e879f9); }
+  .post-meta { flex: 1; }
+  .pm-name { font-size: 14px; font-weight: 700; color: #1e293b; }
+  .pm-time { font-size: 12px; color: #94a3b8; }
+  .post-cat { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; }
+  .cat-free { background: #eef2ff; color: #6366f1; }
+  .cat-q { background: #fffbeb; color: #d97706; }
+  .cat-info { background: #ecfdf5; color: #059669; }
+  .hot-tag { font-size: 11px; font-weight: 800; color: #ef4444; background: #fef2f2; padding: 4px 10px; border-radius: 8px; margin-left: 6px; animation: bounce 1s infinite; }
+  @keyframes bounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  .post-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 6px; }
+  .post-body { font-size: 14px; color: #64748b; line-height: 1.7; margin-bottom: 16px; }
+  .post-actions { display: flex; gap: 6px; }
+  .pa-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+  .pa-btn.like { background: #fef2f2; color: #ef4444; }
+  .pa-btn.like:hover { background: #fee2e2; }
+  .pa-btn.like.active { background: #ef4444; color: #fff; box-shadow: 0 2px 8px rgba(239,68,68,0.3); }
+  .pa-btn.comment { background: #f0f9ff; color: #0284c7; }
+  .pa-btn.comment:hover { background: #e0f2fe; }
+  .pa-btn.share { background: #f5f3ff; color: #7c3aed; }
+  .pa-btn.share:hover { background: #ede9fe; }
+  .pa-btn.report { background: #fff7ed; color: #c2410c; margin-left: auto; }
+
+  /* Right */
+  .right { background: #fff; border-left: 1px solid #eef2ff; padding: 24px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .rp-card { background: #fafbff; border: 1px solid #eef2ff; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .rp-title { font-size: 15px; font-weight: 800; color: #1e293b; margin-bottom: 14px; }
+  .tr-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .tr-item:last-child { border: none; }
+  .tr-rank { font-size: 18px; font-weight: 900; min-width: 24px; }
+  .tr-rank:nth-child(1) { color: #6366f1; }
+  .tr-text { font-size: 14px; font-weight: 600; color: #1e293b; }
+  .tr-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sg { text-align: center; padding: 14px; background: linear-gradient(135deg, #eef2ff, #fdf2f8); border-radius: 14px; }
+  .sg-val { font-size: 28px; font-weight: 900; background: linear-gradient(135deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .sg-lbl { font-size: 11px; color: #94a3b8; margin-top: 2px; font-weight: 500; }
+
+  @media (max-width: 1100px) { .layout { grid-template-columns: 1fr 300px; } .sidebar { display: none; } }
+  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .right { display: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><span>HQ Board</span></div>
+    <div class="nav-item active"><span class="icon">🏠</span> 피드 <span class="cnt">12</span></div>
+    <div class="nav-item"><span class="icon">🔥</span> 인기</div>
+    <div class="nav-item"><span class="icon">🔔</span> 알림 <span class="cnt">3</span></div>
+    <div class="nav-item"><span class="icon">📝</span> 내 글</div>
+    <div class="nav-item"><span class="icon">❤️</span> 공감한 글</div>
+    <div class="nav-item"><span class="icon">⚙️</span> 설정</div>
+    <button class="write-btn">✨ 새 글 작성</button>
+    <div class="sidebar-bottom">
+      <div class="sb-avatar">👤</div>
+      <div><div class="sb-name">익명 사용자</div><div class="sb-info">로그인 중</div></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <div class="mh-top">
+        <div class="main-title">피드</div>
+      </div>
+      <div class="tabs">
+        <div class="tab active">🕐 최신</div>
+        <div class="tab">🔥 인기</div>
+      </div>
+    </div>
+    <div class="cats">
+      <button class="cp all">전체</button>
+      <button class="cp">💬 자유</button>
+      <button class="cp">❓ 질문</button>
+      <button class="cp">ℹ️ 정보</button>
+    </div>
+    <div class="feed">
+      <div class="post">
+        <div class="post-header">
+          <div class="post-avatar av1">👤</div>
+          <div class="post-meta"><div class="pm-name">익명</div><div class="pm-time">5분 전</div></div>
+          <span class="post-cat cat-free">자유</span>
+          <span class="hot-tag">🔥 HOT</span>
+        </div>
+        <div class="post-title">구내식당 메뉴 개선 건의합니다</div>
+        <div class="post-body">매일 같은 메뉴가 반복되는 것 같아서요. 다양한 메뉴 옵션이 있으면 좋겠습니다. 특히 채식 옵션이 추가되면 좋겠어요. 주변 회사들은 다 메뉴가 다양하던데...</div>
+        <div class="post-actions">
+          <button class="pa-btn like active">❤️ 24</button>
+          <button class="pa-btn comment">💬 8</button>
+          <button class="pa-btn share">🔗 공유</button>
+          <button class="pa-btn report">⚑ 신고</button>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-header">
+          <div class="post-avatar av2">👤</div>
+          <div class="post-meta"><div class="pm-name">익명</div><div class="pm-time">23분 전</div></div>
+          <span class="post-cat cat-q">질문</span>
+        </div>
+        <div class="post-title">연차 신청 시스템 어디서 하나요?</div>
+        <div class="post-body">입사한지 얼마 안 돼서 잘 모르겠는데, 연차 신청을 어느 시스템에서 해야 하나요? HR 포탈인가요 아니면 별도 앱이 있나요?</div>
+        <div class="post-actions">
+          <button class="pa-btn like">❤️ 3</button>
+          <button class="pa-btn comment">💬 12</button>
+          <button class="pa-btn share">🔗 공유</button>
+          <button class="pa-btn report">⚑ 신고</button>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-header">
+          <div class="post-avatar av3">👤</div>
+          <div class="post-meta"><div class="pm-name">익명</div><div class="pm-time">1시간 전</div></div>
+          <span class="post-cat cat-info">정보</span>
+          <span class="hot-tag">🔥 HOT</span>
+        </div>
+        <div class="post-title">이번 주 금요일 전사 타운홀 안내</div>
+        <div class="post-body">이번 주 금요일 오후 3시에 대강당에서 전사 타운홀 미팅이 있습니다. 참석 필수이니 일정 확인해주세요. 간식도 준비된다고 합니다!</div>
+        <div class="post-actions">
+          <button class="pa-btn like active">❤️ 45</button>
+          <button class="pa-btn comment">💬 5</button>
+          <button class="pa-btn share">🔗 공유</button>
+          <button class="pa-btn report">⚑ 신고</button>
+        </div>
+      </div>
+      <div class="post">
+        <div class="post-header">
+          <div class="post-avatar av4">👤</div>
+          <div class="post-meta"><div class="pm-name">익명</div><div class="pm-time">2시간 전</div></div>
+          <span class="post-cat cat-free">자유</span>
+        </div>
+        <div class="post-title">회사 근처 맛집 추천해주세요</div>
+        <div class="post-body">점심시간에 갈 만한 괜찮은 식당 있을까요? 한식 위주로 추천 부탁드립니다. 가성비 좋은 곳이면 더 좋아요.</div>
+        <div class="post-actions">
+          <button class="pa-btn like">❤️ 15</button>
+          <button class="pa-btn comment">💬 21</button>
+          <button class="pa-btn share">🔗 공유</button>
+          <button class="pa-btn report">⚑ 신고</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="right">
+    <div class="rp-card">
+      <div class="rp-title">🔥 실시간 인기</div>
+      <div class="tr-item"><span class="tr-rank" style="color:#6366f1">1</span><div><div class="tr-text">구내식당 메뉴 개선</div><div class="tr-sub">공감 24 · 댓글 8</div></div></div>
+      <div class="tr-item"><span class="tr-rank" style="color:#8b5cf6">2</span><div><div class="tr-text">전사 타운홀 안내</div><div class="tr-sub">공감 45 · 댓글 5</div></div></div>
+      <div class="tr-item"><span class="tr-rank" style="color:#a78bfa">3</span><div><div class="tr-text">맛집 추천 스레드</div><div class="tr-sub">공감 15 · 댓글 21</div></div></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-title">📊 오늘의 보드</div>
+      <div class="stat-grid">
+        <div class="sg"><div class="sg-val">18</div><div class="sg-lbl">오늘 글</div></div>
+        <div class="sg"><div class="sg-val">47</div><div class="sg-lbl">오늘 댓글</div></div>
+        <div class="sg"><div class="sg-val">83</div><div class="sg-lbl">활성 사용자</div></div>
+        <div class="sg"><div class="sg-val">1.2K</div><div class="sg-lbl">총 게시글</div></div>
+      </div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>
