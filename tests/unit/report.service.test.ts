@@ -2,13 +2,16 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient, Category } from '@prisma/client';
 import { createReport, getReportCount } from '@/lib/services/report.service';
 import { createPost } from '@/lib/services/post.service';
+import { createComment } from '@/lib/services/comment.service';
 
 const prisma = new PrismaClient();
 
 let testUserIds: string[] = [];
 let testPostId: string;
 let testPostForHideId: string;
+let testCommentId: string;
 let createdPostIds: string[] = [];
+let createdCommentIds: string[] = [];
 
 beforeAll(async () => {
   // Get 4 test users for report threshold testing
@@ -34,11 +37,23 @@ beforeAll(async () => {
   });
   testPostForHideId = postForHide.id;
   createdPostIds.push(postForHide.id);
+
+  // Create a comment for COMMENT-type report testing
+  const comment = await createComment(
+    testUserIds[0],
+    testPostId,
+    '신고 테스트용 댓글',
+  );
+  testCommentId = comment.id;
+  createdCommentIds.push(comment.id);
 });
 
 afterAll(async () => {
   await prisma.report.deleteMany({
-    where: { targetId: { in: createdPostIds } },
+    where: { targetId: { in: [...createdPostIds, ...createdCommentIds] } },
+  });
+  await prisma.comment.deleteMany({
+    where: { id: { in: createdCommentIds } },
   });
   await prisma.post.deleteMany({
     where: { id: { in: createdPostIds } },
@@ -110,5 +125,20 @@ describe('report.service - createReport', () => {
       select: { isHidden: true },
     });
     expect(post?.isHidden).toBe(true);
+  });
+
+  it('does not return hidden:true for COMMENT reports even at 3+ reports', async () => {
+    // Report the comment from 3 different users
+    await createReport(testUserIds[0], 'COMMENT', testCommentId, 'ABUSE');
+    await createReport(testUserIds[1], 'COMMENT', testCommentId, 'SPAM');
+    const result = await createReport(
+      testUserIds[2],
+      'COMMENT',
+      testCommentId,
+      'INAPPROPRIATE',
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.hidden).toBe(false);
   });
 });

@@ -24,30 +24,27 @@ export async function createReport(
     return { success: false, duplicate: true };
   }
 
-  await prisma.report.create({
-    data: { reporterId, targetType, targetId, reason },
-  });
+  return prisma.$transaction(async (tx) => {
+    await tx.report.create({
+      data: { reporterId, targetType, targetId, reason },
+    });
 
-  // Count unique reports for target
-  const reportCount = await prisma.report.count({
-    where: { targetType, targetId },
-  });
+    // Count unique reports for target
+    const reportCount = await tx.report.count({
+      where: { targetType, targetId },
+    });
 
-  let hidden = false;
-  if (reportCount >= 3) {
-    if (targetType === 'POST') {
-      await prisma.post.update({
+    let hidden = false;
+    if (reportCount >= 3 && targetType === 'POST') {
+      await tx.post.update({
         where: { id: targetId },
         data: { isHidden: true },
       });
-    } else {
-      // Comments don't have isHidden in schema, but spec mentions it
-      // For now we handle POST only since Comment schema lacks isHidden
+      hidden = true;
     }
-    hidden = true;
-  }
 
-  return { success: true, hidden };
+    return { success: true, hidden };
+  });
 }
 
 export async function getReportCount(
