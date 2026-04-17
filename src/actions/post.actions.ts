@@ -69,8 +69,12 @@ export async function createPost(input: unknown) {
     };
   }
 
-  const post = await postService.createPost(user.id, parsed.data);
-  return { post: stripPost(post) };
+  try {
+    const post = await postService.createPost(user.id, parsed.data);
+    return { post: stripPost(post) };
+  } catch {
+    return { error: '게시글 작성에 실패했습니다. 다시 시도해주세요.' };
+  }
 }
 
 export async function deletePost(input: unknown) {
