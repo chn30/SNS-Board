@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const getPostsSchema = z.object({
-  cursor: z.string().uuid().optional(),
+  cursor: z.string().min(1).optional(),
   category: z.enum(['FREE', 'QUESTION', 'INFO']).optional(),
   sort: z.enum(['latest', 'popular']).default('latest'),
 });

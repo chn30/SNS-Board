@@ -22,14 +22,14 @@ export async function getComments(
   };
 
   if (cursor) {
-    where.createdAt = {
-      lt: (
-        await prisma.comment.findUniqueOrThrow({
-          where: { id: cursor },
-          select: { createdAt: true },
-        })
-      ).createdAt,
-    };
+    const cursorComment = await prisma.comment.findUnique({
+      where: { id: cursor },
+      select: { createdAt: true },
+    });
+    if (!cursorComment) {
+      return { comments: [], nextCursor: null };
+    }
+    where.createdAt = { lt: cursorComment.createdAt };
   }
 
   const comments = await prisma.comment.findMany({

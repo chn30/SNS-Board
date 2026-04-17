@@ -96,14 +96,14 @@ export async function getPosts(
 
   // Latest sort: cursor-based pagination using createdAt
   if (cursor) {
-    where.createdAt = {
-      lt: (
-        await prisma.post.findUniqueOrThrow({
-          where: { id: cursor },
-          select: { createdAt: true },
-        })
-      ).createdAt,
-    };
+    const cursorPost = await prisma.post.findUnique({
+      where: { id: cursor },
+      select: { createdAt: true },
+    });
+    if (!cursorPost) {
+      return { posts: [], nextCursor: null };
+    }
+    where.createdAt = { lt: cursorPost.createdAt };
   }
 
   const posts = await prisma.post.findMany({
@@ -167,7 +167,7 @@ export async function getPost(
 
   if (!post) return null;
 
-  // Increment view count (fire-and-forget)
+  // Increment view count
   await prisma.post.update({
     where: { id },
     data: { viewCount: { increment: 1 } },
