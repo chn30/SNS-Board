@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import type { TargetType } from '@prisma/client';
 
 const PAGE_SIZE = 20;
 
