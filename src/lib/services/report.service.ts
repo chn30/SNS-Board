@@ -58,7 +58,11 @@ export async function getReportCount(
   targetType: TargetType,
   targetId: string,
 ): Promise<number> {
-  return prisma.report.count({
-    where: { targetType, targetId },
-  });
+  try {
+    return await prisma.report.count({
+      where: { targetType, targetId },
+    });
+  } catch {
+    return 0;
+  }
 }
