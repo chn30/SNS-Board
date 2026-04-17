@@ -174,3 +174,55 @@ describe('comment.service - deleteComment', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('comment.service - cursor pagination', () => {
+  it('returns next page with cursor', async () => {
+    // Create 22 comments to test pagination
+    for (let i = 0; i < 22; i++) {
+      const c = await createComment(
+        testUserId,
+        testPostId,
+        `페이지네이션 댓글 ${i}`,
+      );
+      createdCommentIds.push(c.id);
+    }
+
+    const page1 = await getComments(testPostId, undefined, testUserId);
+    expect(page1.comments.length).toBeLessThanOrEqual(20);
+
+    if (page1.nextCursor) {
+      const page2 = await getComments(testPostId, page1.nextCursor, testUserId);
+      expect(page2.comments.length).toBeGreaterThan(0);
+
+      // Ensure no overlap
+      const page1Ids = new Set(page1.comments.map((c) => c.id));
+      for (const c of page2.comments) {
+        expect(page1Ids.has(c.id)).toBe(false);
+      }
+    }
+  });
+});
+
+describe('comment.service - isLiked', () => {
+  it('returns isLiked true when user has liked a comment', async () => {
+    const comment = await createComment(testUserId, testPostId, '좋아요 댓글');
+    createdCommentIds.push(comment.id);
+
+    // Create a like directly in DB
+    const like = await prisma.like.create({
+      data: {
+        userId: testUserId,
+        targetType: 'COMMENT',
+        targetId: comment.id,
+      },
+    });
+
+    const result = await getComments(testPostId, undefined, testUserId);
+    const found = result.comments.find((c) => c.id === comment.id);
+    expect(found).toBeDefined();
+    expect(found!.isLiked).toBe(true);
+
+    // Cleanup like
+    await prisma.like.delete({ where: { id: like.id } });
+  });
+});

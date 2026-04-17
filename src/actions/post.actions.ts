@@ -25,10 +25,16 @@ function stripPost(post: postService.PostListItem | postService.PostDetail) {
 
 export async function getPosts(input: unknown) {
   const user = await requireAuth();
-  const parsed = getPostsSchema.parse(input);
+  const parsed = getPostsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      error: '잘못된 요청입니다.',
+      validationErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
 
   const result = await postService.getPosts({
-    ...parsed,
+    ...parsed.data,
     userId: user.id,
   });
 
@@ -40,9 +46,12 @@ export async function getPosts(input: unknown) {
 
 export async function getPost(input: unknown) {
   const user = await requireAuth();
-  const { postId } = getPostSchema.parse(input);
+  const parsed = getPostSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: '잘못된 요청입니다.' };
+  }
 
-  const post = await postService.getPost(postId, user.id);
+  const post = await postService.getPost(parsed.data.postId, user.id);
   if (!post) {
     return { error: '게시글을 찾을 수 없습니다.' };
   }
@@ -52,15 +61,29 @@ export async function getPost(input: unknown) {
 
 export async function createPost(input: unknown) {
   const user = await requireAuth();
-  const data = createPostSchema.parse(input);
+  const parsed = createPostSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      error: '잘못된 요청입니다.',
+      validationErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
 
-  const post = await postService.createPost(user.id, data);
+  const post = await postService.createPost(user.id, parsed.data);
   return { post: stripPost(post) };
 }
 
 export async function deletePost(input: unknown) {
   const user = await requireAuth();
-  const { postId } = deletePostSchema.parse(input);
+  const parsed = deletePostSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: '잘못된 요청입니다.' };
+  }
 
-  return postService.deletePost(postId, user.id, user.role);
+  const result = await postService.deletePost(
+    parsed.data.postId,
+    user.id,
+    user.role,
+  );
+  return { success: result.success, error: result.error };
 }

@@ -21,9 +21,16 @@ function stripComment(comment: commentService.CommentItem) {
 
 export async function getComments(input: unknown) {
   const user = await requireAuth();
-  const { postId, cursor } = getCommentsSchema.parse(input);
+  const parsed = getCommentsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: '잘못된 요청입니다.' };
+  }
 
-  const result = await commentService.getComments(postId, cursor, user.id);
+  const result = await commentService.getComments(
+    parsed.data.postId,
+    parsed.data.cursor,
+    user.id,
+  );
 
   return {
     comments: result.comments.map(stripComment),
@@ -33,15 +40,33 @@ export async function getComments(input: unknown) {
 
 export async function createComment(input: unknown) {
   const user = await requireAuth();
-  const { postId, content } = createCommentSchema.parse(input);
+  const parsed = createCommentSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      error: '잘못된 요청입니다.',
+      validationErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
 
-  const comment = await commentService.createComment(user.id, postId, content);
+  const comment = await commentService.createComment(
+    user.id,
+    parsed.data.postId,
+    parsed.data.content,
+  );
   return { comment: stripComment(comment) };
 }
 
 export async function deleteComment(input: unknown) {
   const user = await requireAuth();
-  const { commentId } = deleteCommentSchema.parse(input);
+  const parsed = deleteCommentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: '잘못된 요청입니다.' };
+  }
 
-  return commentService.deleteComment(commentId, user.id, user.role);
+  const result = await commentService.deleteComment(
+    parsed.data.commentId,
+    user.id,
+    user.role,
+  );
+  return { success: result.success, error: result.error };
 }

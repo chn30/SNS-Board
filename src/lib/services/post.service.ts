@@ -40,6 +40,61 @@ export async function getPosts(
     ...(category ? { category } : {}),
   };
 
+  if (sort === 'popular') {
+    // For popular sort, fetch all eligible posts and sort by score in memory.
+    // Cursor for popular sort uses offset-based pagination (page number encoded as cursor).
+    const page = cursor ? parseInt(cursor, 10) : 0;
+    const skip = page * PAGE_SIZE;
+
+    const posts = await prisma.post.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        category: true,
+        likeCount: true,
+        commentCount: true,
+        viewCount: true,
+        createdAt: true,
+      },
+    });
+
+    const scored = posts
+      .map((p) => ({
+        ...p,
+        _score: calculatePopularScore(p.likeCount, p.createdAt),
+      }))
+      .sort((a, b) => b._score - a._score);
+
+    const sliced = scored.slice(skip, skip + PAGE_SIZE + 1);
+    const hasMore = sliced.length > PAGE_SIZE;
+    const result = sliced.slice(0, PAGE_SIZE);
+
+    let likedPostIds = new Set<string>();
+    if (userId && result.length > 0) {
+      const likes = await prisma.like.findMany({
+        where: {
+          userId,
+          targetType: 'POST',
+          targetId: { in: result.map((p) => p.id) },
+        },
+        select: { targetId: true },
+      });
+      likedPostIds = new Set(likes.map((l) => l.targetId));
+    }
+
+    return {
+      posts: result.map(({ _score, ...p }) => ({
+        ...p,
+        isLiked: likedPostIds.has(p.id),
+      })),
+      nextCursor: hasMore ? String(page + 1) : null,
+    };
+  }
+
+  // Latest sort: cursor-based pagination using createdAt
   if (cursor) {
     where.createdAt = {
       lt: (
@@ -51,13 +106,10 @@ export async function getPosts(
     };
   }
 
-  // For popular sort, fetch more to sort in memory
-  const take = sort === 'popular' ? PAGE_SIZE * 5 : PAGE_SIZE + 1;
-
   const posts = await prisma.post.findMany({
     where,
     orderBy: { createdAt: 'desc' },
-    take,
+    take: PAGE_SIZE + 1,
     select: {
       id: true,
       title: true,
@@ -70,7 +122,6 @@ export async function getPosts(
     },
   });
 
-  // Check isLiked for current user
   let likedPostIds = new Set<string>();
   if (userId && posts.length > 0) {
     const likes = await prisma.like.findMany({
@@ -82,27 +133,6 @@ export async function getPosts(
       select: { targetId: true },
     });
     likedPostIds = new Set(likes.map((l) => l.targetId));
-  }
-
-  if (sort === 'popular') {
-    const scored = posts
-      .map((p) => ({
-        ...p,
-        _score: calculatePopularScore(p.likeCount, p.createdAt),
-      }))
-      .sort((a, b) => b._score - a._score)
-      .slice(0, PAGE_SIZE + 1);
-
-    const hasMore = scored.length > PAGE_SIZE;
-    const result = scored.slice(0, PAGE_SIZE);
-
-    return {
-      posts: result.map(({ _score, ...p }) => ({
-        ...p,
-        isLiked: likedPostIds.has(p.id),
-      })),
-      nextCursor: hasMore ? result[result.length - 1].id : null,
-    };
   }
 
   const hasMore = posts.length > PAGE_SIZE;
