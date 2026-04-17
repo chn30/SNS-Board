@@ -25,7 +25,7 @@ export default function WritePage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setFieldErrors({});
@@ -41,8 +41,8 @@ export default function WritePage() {
         return;
       }
 
-      router.push('/');
-      router.refresh();
+      // Navigate outside transition to avoid blocking on RSC fetch
+      window.location.href = '/';
     });
   }
 

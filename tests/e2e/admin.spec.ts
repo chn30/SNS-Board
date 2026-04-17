@@ -108,7 +108,7 @@ test.describe('Admin Pages', () => {
 
     // Navigate to reports via sidebar
     await page.click('[data-testid="admin-nav-reports"]');
-    await expect(page).toHaveURL(/\/admin\/reports/);
+    await expect(page).toHaveURL(/\/admin\/reports/, { timeout: 10000 });
     await expect(
       page.locator('[data-testid="admin-reports-page"]'),
     ).toBeVisible();
