@@ -63,8 +63,6 @@ export async function toggleLike(
       }
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to toggle like';
-    return { liked: false, likeCount: 0, error: message };
+    return { liked: false, likeCount: 0, error: 'Failed to toggle like' };
   }
 }

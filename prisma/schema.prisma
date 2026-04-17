@@ -90,7 +90,7 @@ model Like {
   targetId   String
   createdAt  DateTime   @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, targetType, targetId])
   @@index([targetType, targetId])
@@ -104,7 +104,7 @@ model Report {
   reason     ReportReason
   createdAt  DateTime     @default(now())
 
-  reporter User @relation(fields: [reporterId], references: [id])
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@unique([reporterId, targetType, targetId])
   @@index([targetType, targetId])

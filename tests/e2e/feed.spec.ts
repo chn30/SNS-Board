@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-async function login(page: import('@playwright/test').Page) {
+async function login(page: Page) {
   await page.goto('/login');
   await page.fill('[data-testid="login-email"]', 'test-user-1@test.com');
   await page.fill('[data-testid="login-password"]', 'password');

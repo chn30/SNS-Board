@@ -48,9 +48,7 @@ export async function createReport(
       return { success: true, hidden };
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to create report';
-    return { success: false, error: message };
+    return { success: false, error: 'Failed to create report' };
   }
 }
 
