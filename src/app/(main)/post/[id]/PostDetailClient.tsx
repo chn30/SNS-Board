@@ -1,10 +1,12 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { deletePost } from '@/actions/post.actions';
 import CommentList from '@/components/comments/CommentList';
+import LikeButton from '@/components/LikeButton';
+import ReportModal from '@/components/ReportModal';
 
 const CATEGORY_MAP: Record<
   string,
@@ -60,19 +62,24 @@ interface PostDetailClientProps {
 export default function PostDetailClient({ post }: PostDetailClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [deleteError, setDeleteError] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
   const cat = CATEGORY_MAP[post.category] ?? CATEGORY_MAP.FREE;
   const isHot = post.likeCount >= 10;
 
   function handleDelete() {
     if (!confirm('게시글을 삭제하시겠습니까?')) return;
+    setDeleteError('');
     startTransition(async () => {
       try {
         const result = await deletePost({ postId: post.id });
         if (result.success) {
           router.push('/');
+        } else {
+          setDeleteError(result.error || '삭제에 실패했습니다.');
         }
       } catch {
-        // silently fail
+        setDeleteError('삭제에 실패했습니다. 다시 시도해주세요.');
       }
     });
   }
@@ -82,7 +89,7 @@ export default function PostDetailClient({ post }: PostDetailClientProps) {
       {/* Back button */}
       <Link
         href="/"
-        data-testid="back-button"
+        data-testid="post-back"
         className="mb-6 inline-flex items-center gap-2 text-sm text-text-muted transition-colors hover:text-text-secondary"
       >
         ← 피드로 돌아가기
@@ -139,6 +146,10 @@ export default function PostDetailClient({ post }: PostDetailClientProps) {
           )}
         </div>
 
+        {deleteError && (
+          <p className="mt-2 text-xs text-red-400">{deleteError}</p>
+        )}
+
         {/* Title */}
         <h1
           data-testid="post-detail-title"
@@ -158,25 +169,31 @@ export default function PostDetailClient({ post }: PostDetailClientProps) {
         {/* Stats & Actions */}
         <div className="flex items-center justify-between border-t border-[rgba(255,255,255,0.06)] pt-4">
           <div className="flex items-center gap-4 text-xs text-text-muted">
-            <button
-              data-testid="like-button"
-              className="flex items-center gap-1 transition-colors hover:text-accent"
-            >
-              {post.isLiked ? '💜' : '🤍'} {post.likeCount}
-            </button>
+            <span data-testid="post-like-count">
+              <LikeButton
+                targetType="POST"
+                targetId={post.id}
+                initialLiked={post.isLiked}
+                initialCount={post.likeCount}
+              />
+            </span>
             <span
               data-testid="post-comment-count"
               className="flex items-center gap-1"
             >
               💬 {post.commentCount}
             </span>
-            <span data-testid="view-count" className="flex items-center gap-1">
+            <span
+              data-testid="post-view-count"
+              className="flex items-center gap-1"
+            >
               👁 {post.viewCount}
             </span>
           </div>
 
           <button
             data-testid="report-button"
+            onClick={() => setReportOpen(true)}
             className="rounded-lg px-3 py-1.5 text-xs text-text-muted transition-colors hover:bg-[rgba(255,255,255,0.03)] hover:text-red-400"
           >
             🚨 신고
@@ -186,6 +203,13 @@ export default function PostDetailClient({ post }: PostDetailClientProps) {
 
       {/* Comments */}
       <CommentList postId={post.id} />
+
+      <ReportModal
+        targetType="POST"
+        targetId={post.id}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+      />
     </div>
   );
 }

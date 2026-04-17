@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import LikeButton from '@/components/LikeButton';
+import ReportModal from '@/components/ReportModal';
 
 const AVATAR_GRADIENTS = [
   'from-purple-500 to-pink-500',
@@ -64,74 +67,98 @@ export default function PostCard({ post, index }: PostCardProps) {
   const cat = CATEGORY_MAP[post.category] ?? CATEGORY_MAP.FREE;
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
   const isHot = post.likeCount >= 10;
+  const [reportOpen, setReportOpen] = useState(false);
 
   return (
-    <Link
-      href={`/post/${post.id}`}
-      data-testid="post-card"
-      className="glass group block rounded-xl p-5 transition-all duration-200 hover:-translate-y-px hover:border-[rgba(139,92,246,0.3)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)]"
-    >
-      <div className="flex gap-4">
-        {/* Avatar */}
-        <div
-          data-testid="post-avatar"
-          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-sm font-bold text-white`}
-        >
-          익
-        </div>
-
-        <div className="min-w-0 flex-1">
-          {/* Meta row */}
-          <div className="mb-1.5 flex items-center gap-2 text-xs">
-            <span className="font-medium text-text-secondary">익명</span>
-            <span className="text-text-muted">·</span>
-            <span className="text-text-muted">{timeAgo(post.createdAt)}</span>
-            <span
-              className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${cat.bgClass} ${cat.textClass}`}
-            >
-              {cat.label}
-            </span>
-            {isHot && (
-              <span
-                data-testid="hot-badge"
-                className="hot-badge text-[11px] font-bold"
-              >
-                HOT
-              </span>
-            )}
-          </div>
-
-          {/* Title */}
-          <h3
-            data-testid="post-title"
-            className="mb-1 truncate text-[16px] font-bold leading-snug text-text-primary group-hover:text-accent"
+    <>
+      <Link
+        href={`/post/${post.id}`}
+        data-testid="post-card"
+        className="glass group block rounded-xl p-5 transition-all duration-200 hover:-translate-y-px hover:border-[rgba(139,92,246,0.3)] hover:shadow-[0_4px_20px_rgba(139,92,246,0.15)]"
+      >
+        <div className="flex gap-4">
+          {/* Avatar */}
+          <div
+            data-testid="post-avatar"
+            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-sm font-bold text-white`}
           >
-            {post.title}
-          </h3>
+            익
+          </div>
 
-          {/* Body preview */}
-          <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-text-secondary">
-            {post.content}
-          </p>
+          <div className="min-w-0 flex-1">
+            {/* Meta row */}
+            <div className="mb-1.5 flex items-center gap-2 text-xs">
+              <span className="font-medium text-text-secondary">익명</span>
+              <span className="text-text-muted">·</span>
+              <span className="text-text-muted">{timeAgo(post.createdAt)}</span>
+              <span
+                className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${cat.bgClass} ${cat.textClass}`}
+              >
+                {cat.label}
+              </span>
+              {isHot && (
+                <span
+                  data-testid="hot-badge"
+                  className="hot-badge text-[11px] font-bold"
+                >
+                  HOT
+                </span>
+              )}
+            </div>
 
-          {/* Action row */}
-          <div className="flex items-center gap-4 text-xs text-text-muted">
-            <span
-              data-testid="post-like-count"
-              className="flex items-center gap-1"
+            {/* Title */}
+            <h3
+              data-testid="post-title"
+              className="mb-1 truncate text-[16px] font-bold leading-snug text-text-primary group-hover:text-accent"
             >
-              {post.isLiked ? '💜' : '🤍'} {post.likeCount}
-            </span>
-            <span
-              data-testid="post-comment-count"
-              className="flex items-center gap-1"
-            >
-              💬 {post.commentCount}
-            </span>
-            <span className="flex items-center gap-1">👁 {post.viewCount}</span>
+              {post.title}
+            </h3>
+
+            {/* Body preview */}
+            <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+              {post.content}
+            </p>
+
+            {/* Action row */}
+            <div className="flex items-center gap-4 text-xs text-text-muted">
+              <span data-testid="post-like-count">
+                <LikeButton
+                  targetType="POST"
+                  targetId={post.id}
+                  initialLiked={post.isLiked}
+                  initialCount={post.likeCount}
+                />
+              </span>
+              <span
+                data-testid="post-comment-count"
+                className="flex items-center gap-1"
+              >
+                💬 {post.commentCount}
+              </span>
+              <span className="flex items-center gap-1">
+                👁 {post.viewCount}
+              </span>
+              <button
+                data-testid="report-button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setReportOpen(true);
+                }}
+                className="ml-auto text-text-muted transition-colors hover:text-red-400"
+              >
+                🚨
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      <ReportModal
+        targetType="POST"
+        targetId={post.id}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+      />
+    </>
   );
 }

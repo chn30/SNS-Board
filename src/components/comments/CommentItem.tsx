@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react';
 import { deleteComment } from '@/actions/comment.actions';
+import LikeButton from '@/components/LikeButton';
+import ReportModal from '@/components/ReportModal';
 
 const AVATAR_GRADIENTS = [
   'from-blue-500 to-cyan-500',
@@ -47,6 +49,7 @@ export default function CommentItem({
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
   const [isPending, startTransition] = useTransition();
   const [deleted, setDeleted] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (deleted) return null;
 
@@ -62,54 +65,72 @@ export default function CommentItem({
   }
 
   return (
-    <div
-      data-testid="comment-item"
-      className="glass rounded-xl p-4 transition-all duration-200"
-    >
-      <div className="flex gap-3">
-        {/* Avatar */}
-        <div
-          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-xs font-bold text-white`}
-        >
-          익
-        </div>
-
-        <div className="min-w-0 flex-1">
-          {/* Meta */}
-          <div className="mb-1 flex items-center gap-2 text-xs">
-            <span className="font-medium text-text-secondary">익명</span>
-            <span className="text-text-muted">·</span>
-            <span className="text-text-muted">
-              {timeAgo(comment.createdAt)}
-            </span>
+    <>
+      <div
+        data-testid="comment-item"
+        className="glass rounded-xl p-4 transition-all duration-200"
+      >
+        <div className="flex gap-3">
+          {/* Avatar */}
+          <div
+            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-xs font-bold text-white`}
+          >
+            익
           </div>
 
-          {/* Content */}
-          <p
-            data-testid="comment-content"
-            className="text-sm leading-relaxed text-text-primary"
-          >
-            {comment.content}
-          </p>
+          <div className="min-w-0 flex-1">
+            {/* Meta */}
+            <div className="mb-1 flex items-center gap-2 text-xs">
+              <span className="font-medium text-text-secondary">익명</span>
+              <span className="text-text-muted">·</span>
+              <span className="text-text-muted">
+                {timeAgo(comment.createdAt)}
+              </span>
+            </div>
 
-          {/* Actions */}
-          <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
-            <span className="flex items-center gap-1">
-              {comment.isLiked ? '💜' : '🤍'} {comment.likeCount}
-            </span>
-            {comment.isOwner && (
+            {/* Content */}
+            <p
+              data-testid="comment-content"
+              className="text-sm leading-relaxed text-text-primary"
+            >
+              {comment.content}
+            </p>
+
+            {/* Actions */}
+            <div className="mt-2 flex items-center gap-3 text-xs text-text-muted">
+              <LikeButton
+                targetType="COMMENT"
+                targetId={comment.id}
+                initialLiked={comment.isLiked}
+                initialCount={comment.likeCount}
+              />
+              {comment.isOwner && (
+                <button
+                  data-testid="comment-delete"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="text-red-400 transition-colors hover:text-red-300"
+                >
+                  {isPending ? '삭제 중...' : '삭제'}
+                </button>
+              )}
               <button
-                data-testid="comment-delete"
-                onClick={handleDelete}
-                disabled={isPending}
-                className="text-red-400 transition-colors hover:text-red-300"
+                data-testid="report-button"
+                onClick={() => setReportOpen(true)}
+                className="text-text-muted transition-colors hover:text-red-400"
               >
-                {isPending ? '삭제 중...' : '삭제'}
+                🚨
               </button>
-            )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      <ReportModal
+        targetType="COMMENT"
+        targetId={comment.id}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+      />
+    </>
   );
 }
