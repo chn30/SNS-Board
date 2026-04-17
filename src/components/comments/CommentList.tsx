@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getComments } from '@/actions/comment.actions';
 import CommentItem, { type CommentData } from './CommentItem';
 import CommentInput from './CommentInput';
@@ -12,22 +12,28 @@ interface CommentListProps {
 export default function CommentList({ postId }: CommentListProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchComments = useCallback(async () => {
-    const result = await getComments({ postId });
-    if ('comments' in result && result.comments) {
-      setComments(
-        result.comments.map((c: any) => ({
-          ...c,
-          createdAt:
-            typeof c.createdAt === 'string'
-              ? c.createdAt
-              : new Date(c.createdAt).toISOString(),
-        })),
-      );
+    try {
+      const result = await getComments({ postId });
+      if ('comments' in result && result.comments) {
+        setComments(
+          result.comments.map((c: CommentData) => ({
+            ...c,
+            createdAt:
+              typeof c.createdAt === 'string'
+                ? c.createdAt
+                : new Date(c.createdAt as unknown as string).toISOString(),
+          })),
+        );
+      }
+    } catch {
+      setError('댓글을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [postId]);
 
   useEffect(() => {
@@ -62,6 +68,8 @@ export default function CommentList({ postId }: CommentListProps) {
           <div className="py-8 text-center text-sm text-text-muted">
             댓글을 불러오는 중...
           </div>
+        ) : error ? (
+          <div className="py-8 text-center text-sm text-red-400">{error}</div>
         ) : comments.length === 0 ? (
           <div
             data-testid="empty-comments"

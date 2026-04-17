@@ -141,4 +141,51 @@ describe('report.service - createReport', () => {
     expect(result.success).toBe(true);
     expect(result.hidden).toBe(false);
   });
+
+  it('returns structured error when transaction fails', async () => {
+    // Report with an invalid reporterId (non-existent user) to trigger FK error
+    const result = await createReport(
+      '00000000-0000-0000-0000-000000000000',
+      'POST',
+      testPostId,
+      'ABUSE',
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(typeof result.error).toBe('string');
+  });
+
+  it('handles concurrent duplicate reports from the same user gracefully', async () => {
+    // Create a fresh post for this test
+    const freshPost = await createPost(testUserIds[3], {
+      title: '동시성 테스트용 게시글',
+      content: '동시 신고 테스트',
+      category: 'FREE' as Category,
+    });
+    createdPostIds.push(freshPost.id);
+
+    // Fire two parallel reports from the same user
+    const [r1, r2] = await Promise.all([
+      createReport(testUserIds[0], 'POST', freshPost.id, 'ABUSE'),
+      createReport(testUserIds[0], 'POST', freshPost.id, 'SPAM'),
+    ]);
+
+    // Exactly one should succeed, the other should be duplicate or error
+    const successes = [r1, r2].filter((r) => r.success);
+    const failures = [r1, r2].filter((r) => !r.success);
+
+    expect(successes.length).toBe(1);
+    expect(failures.length).toBe(1);
+
+    // The failure should be duplicate or error (not an unhandled crash)
+    const fail = failures[0];
+    expect(fail.duplicate === true || typeof fail.error === 'string').toBe(
+      true,
+    );
+
+    // Verify only 1 report exists in DB
+    const count = await getReportCount('POST', freshPost.id);
+    expect(count).toBe(1);
+  });
 });

@@ -91,4 +91,17 @@ describe('like.service - toggleLike', () => {
     expect(result.liked).toBe(false);
     expect(result.likeCount).toBe(0);
   });
+
+  it('returns structured error when target does not exist', async () => {
+    const result = await toggleLike(
+      testUserId,
+      'POST',
+      '00000000-0000-0000-0000-000000000000',
+    );
+
+    expect(result.liked).toBe(false);
+    expect(result.likeCount).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(typeof result.error).toBe('string');
+  });
 });
