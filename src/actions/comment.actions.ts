@@ -16,6 +16,7 @@ function stripComment(comment: commentService.CommentItem) {
     likeCount: comment.likeCount,
     createdAt: comment.createdAt,
     isLiked: comment.isLiked,
+    isOwner: comment.isOwner,
   };
 }
 

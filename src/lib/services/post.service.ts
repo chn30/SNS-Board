@@ -22,7 +22,9 @@ export interface PostListItem {
   isLiked: boolean;
 }
 
-export interface PostDetail extends PostListItem {}
+export interface PostDetail extends PostListItem {
+  isOwner: boolean;
+}
 
 function calculatePopularScore(likeCount: number, createdAt: Date): number {
   const hoursAge = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
@@ -155,6 +157,7 @@ export async function getPost(
     where: { id, isDeleted: false, isHidden: false },
     select: {
       id: true,
+      authorId: true,
       title: true,
       content: true,
       category: true,
@@ -191,6 +194,7 @@ export async function getPost(
     ...post,
     viewCount: post.viewCount + 1,
     isLiked,
+    isOwner: !!userId && post.authorId === userId,
   };
 }
 
@@ -217,7 +221,7 @@ export async function createPost(
     },
   });
 
-  return { ...post, isLiked: false };
+  return { ...post, isLiked: false, isOwner: true };
 }
 
 export async function deletePost(

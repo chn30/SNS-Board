@@ -9,6 +9,7 @@ export interface CommentItem {
   likeCount: number;
   createdAt: Date;
   isLiked: boolean;
+  isOwner: boolean;
 }
 
 export async function getComments(
@@ -39,6 +40,7 @@ export async function getComments(
     select: {
       id: true,
       postId: true,
+      authorId: true,
       content: true,
       likeCount: true,
       createdAt: true,
@@ -62,9 +64,10 @@ export async function getComments(
   const result = comments.slice(0, PAGE_SIZE);
 
   return {
-    comments: result.map((c) => ({
+    comments: result.map(({ authorId, ...c }) => ({
       ...c,
       isLiked: likedIds.has(c.id),
+      isOwner: !!userId && authorId === userId,
     })),
     nextCursor: hasMore ? result[result.length - 1].id : null,
   };
@@ -101,7 +104,7 @@ export async function createComment(
     }),
   ]);
 
-  return { ...comment, isLiked: false };
+  return { ...comment, isLiked: false, isOwner: true };
 }
 
 export async function deleteComment(

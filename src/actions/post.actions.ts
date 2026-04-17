@@ -10,7 +10,7 @@ import {
 import * as postService from '@/lib/services/post.service';
 
 function stripPost(post: postService.PostListItem | postService.PostDetail) {
-  return {
+  const base = {
     id: post.id,
     title: post.title,
     content: post.content,
@@ -21,6 +21,10 @@ function stripPost(post: postService.PostListItem | postService.PostDetail) {
     createdAt: post.createdAt,
     isLiked: post.isLiked,
   };
+  if ('isOwner' in post) {
+    return { ...base, isOwner: post.isOwner };
+  }
+  return base;
 }
 
 export async function getPosts(input: unknown) {
