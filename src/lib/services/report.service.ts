@@ -5,6 +5,7 @@ export interface CreateReportResult {
   success: boolean;
   duplicate?: boolean;
   hidden?: boolean;
+  error?: string;
 }
 
 export async function createReport(
@@ -13,38 +14,44 @@ export async function createReport(
   targetId: string,
   reason: ReportReason,
 ): Promise<CreateReportResult> {
-  // Check for duplicate report from same user
-  const existing = await prisma.report.findUnique({
-    where: {
-      reporterId_targetType_targetId: { reporterId, targetType, targetId },
-    },
-  });
-
-  if (existing) {
-    return { success: false, duplicate: true };
-  }
-
-  return prisma.$transaction(async (tx) => {
-    await tx.report.create({
-      data: { reporterId, targetType, targetId, reason },
-    });
-
-    // Count unique reports for target
-    const reportCount = await tx.report.count({
-      where: { targetType, targetId },
-    });
-
-    let hidden = false;
-    if (reportCount >= 3 && targetType === 'POST') {
-      await tx.post.update({
-        where: { id: targetId },
-        data: { isHidden: true },
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Check for duplicate inside transaction to prevent TOCTOU race
+      const existing = await tx.report.findUnique({
+        where: {
+          reporterId_targetType_targetId: { reporterId, targetType, targetId },
+        },
       });
-      hidden = true;
-    }
 
-    return { success: true, hidden };
-  });
+      if (existing) {
+        return { success: false, duplicate: true };
+      }
+
+      await tx.report.create({
+        data: { reporterId, targetType, targetId, reason },
+      });
+
+      // Count unique reports for target
+      const reportCount = await tx.report.count({
+        where: { targetType, targetId },
+      });
+
+      let hidden = false;
+      if (reportCount >= 3 && targetType === 'POST') {
+        await tx.post.update({
+          where: { id: targetId },
+          data: { isHidden: true },
+        });
+        hidden = true;
+      }
+
+      return { success: true, hidden };
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to create report';
+    return { success: false, error: message };
+  }
 }
 
 export async function getReportCount(
