@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-  const token = await getToken({
-    req: request,
-    secret,
-  });
+  // NextAuth v5 (Auth.js) uses JWE-encrypted tokens, not signed JWTs.
+  // `getToken` from next-auth/jwt expects signed JWTs → always returns null.
+  // Instead, check for the session cookie's existence.
+  // The actual token validation happens in server-side `auth()` calls.
+  const sessionCookie =
+    request.cookies.get('__Secure-authjs.session-token') ||
+    request.cookies.get('authjs.session-token');
 
-  if (!token) {
+  if (!sessionCookie?.value) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', request.url);
     return NextResponse.redirect(loginUrl);
@@ -20,6 +21,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!login|api/auth|api/health|api/debug-auth|api/debug-signin|_next|favicon).*)',
+    '/((?!login|api/auth|api/health|api/debug-auth|api/debug-signin|api/debug-cookie|_next|favicon).*)',
   ],
 };
