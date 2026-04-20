@@ -1,11 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'CredentialsSignin' || errorParam === 'credentials') {
+      setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+    } else if (errorParam === 'Configuration') {
+      setError('서버 설정에 문제가 있습니다. 관리자에게 문의하세요.');
+    } else if (errorParam) {
+      setError('로그인에 실패했습니다. 다시 시도해주세요.');
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -17,14 +30,20 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      await signIn('credentials', {
+      const result = await signIn('credentials', {
         email,
         password,
-        redirectTo: '/',
+        redirect: false,
       });
+
+      if (result?.error) {
+        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        setLoading(false);
+      } else {
+        window.location.href = '/';
+      }
     } catch {
-      // CredentialsSignin error is thrown when credentials are invalid
-      setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+      setError('로그인에 실패했습니다. 다시 시도해주세요.');
       setLoading(false);
     }
   }
@@ -44,8 +63,9 @@ export default function LoginPage() {
         {error && (
           <div
             data-testid="login-error"
-            className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-400"
+            className="mb-4 flex items-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
           >
+            <span className="text-base">⚠️</span>
             {error}
           </div>
         )}

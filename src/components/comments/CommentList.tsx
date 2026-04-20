@@ -9,6 +9,15 @@ interface CommentListProps {
   postId: string;
 }
 
+function countAll(comments: CommentData[]): number {
+  let count = 0;
+  for (const c of comments) {
+    count += 1;
+    if (c.replies) count += countAll(c.replies);
+  }
+  return count;
+}
+
 export default function CommentList({ postId }: CommentListProps) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,15 +28,7 @@ export default function CommentList({ postId }: CommentListProps) {
     try {
       const result = await getComments({ postId });
       if ('comments' in result && result.comments) {
-        setComments(
-          result.comments.map((c: CommentData) => ({
-            ...c,
-            createdAt:
-              typeof c.createdAt === 'string'
-                ? c.createdAt
-                : new Date(c.createdAt as unknown as string).toISOString(),
-          })),
-        );
+        setComments(result.comments);
       }
     } catch {
       setError('댓글을 불러오는데 실패했습니다.');
@@ -41,6 +42,7 @@ export default function CommentList({ postId }: CommentListProps) {
   }, [fetchComments]);
 
   function handleCommentAdded(comment: CommentData) {
+    // Top-level comment added
     setComments((prev) => [...prev, comment]);
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -48,13 +50,16 @@ export default function CommentList({ postId }: CommentListProps) {
   }
 
   function handleCommentDeleted(commentId: string) {
+    // Remove from top level (nested deletes are handled in CommentItem)
     setComments((prev) => prev.filter((c) => c.id !== commentId));
   }
+
+  const totalCount = countAll(comments);
 
   return (
     <div data-testid="comments-section">
       <h2 className="mb-4 text-lg font-bold text-text-primary">
-        댓글 {comments.length > 0 && `(${comments.length})`}
+        댓글 {totalCount > 0 && `(${totalCount})`}
       </h2>
 
       {/* Comment input */}

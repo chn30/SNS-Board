@@ -53,6 +53,7 @@ interface PostData {
   createdAt: string | Date;
   isLiked: boolean;
   isOwner?: boolean;
+  isAdmin?: boolean;
 }
 
 interface PostDetailClientProps {
@@ -133,8 +134,8 @@ export default function PostDetailClient({ post }: PostDetailClientProps) {
             </div>
           </div>
 
-          {/* Delete button for owner */}
-          {post.isOwner && (
+          {/* Delete button for owner or admin */}
+          {(post.isOwner || post.isAdmin) && (
             <button
               data-testid="delete-post"
               onClick={handleDelete}

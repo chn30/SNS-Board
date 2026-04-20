@@ -1,46 +1,48 @@
 import { prisma } from '@/lib/prisma';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 export interface CommentItem {
   id: string;
   postId: string;
+  parentId: string | null;
   content: string;
   likeCount: number;
   createdAt: Date;
   isLiked: boolean;
   isOwner: boolean;
+  isAdmin: boolean;
+  isPostAuthor: boolean;
+  replies?: CommentItem[];
 }
 
 export async function getComments(
   postId: string,
-  cursor?: string,
-  userId?: string,
+  cursor: string | undefined,
+  userId: string | undefined,
+  userRole?: string,
 ): Promise<{ comments: CommentItem[]; nextCursor: string | null }> {
+  // Get the post author id to mark "글쓴이"
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { authorId: true },
+  });
+  const postAuthorId = post?.authorId;
+
   const where: any = {
     postId,
     isDeleted: false,
   };
 
-  if (cursor) {
-    const cursorComment = await prisma.comment.findUnique({
-      where: { id: cursor },
-      select: { createdAt: true },
-    });
-    if (!cursorComment) {
-      return { comments: [], nextCursor: null };
-    }
-    where.createdAt = { lt: cursorComment.createdAt };
-  }
-
   const comments = await prisma.comment.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'asc' },
     take: PAGE_SIZE + 1,
     select: {
       id: true,
       postId: true,
       authorId: true,
+      parentId: true,
       content: true,
       likeCount: true,
       createdAt: true,
@@ -63,12 +65,36 @@ export async function getComments(
   const hasMore = comments.length > PAGE_SIZE;
   const result = comments.slice(0, PAGE_SIZE);
 
+  const isAdmin = userRole === 'ADMIN';
+
+  // Build flat list with parentId
+  const flat: CommentItem[] = result.map(({ authorId, ...c }) => ({
+    ...c,
+    isLiked: likedIds.has(c.id),
+    isOwner: !!userId && authorId === userId,
+    isAdmin,
+    isPostAuthor: !!postAuthorId && authorId === postAuthorId,
+  }));
+
+  // Build tree structure
+  const map = new Map<string, CommentItem>();
+  const roots: CommentItem[] = [];
+
+  for (const comment of flat) {
+    comment.replies = [];
+    map.set(comment.id, comment);
+  }
+
+  for (const comment of flat) {
+    if (comment.parentId && map.has(comment.parentId)) {
+      map.get(comment.parentId)!.replies!.push(comment);
+    } else {
+      roots.push(comment);
+    }
+  }
+
   return {
-    comments: result.map(({ authorId, ...c }) => ({
-      ...c,
-      isLiked: likedIds.has(c.id),
-      isOwner: !!userId && authorId === userId,
-    })),
+    comments: roots,
     nextCursor: hasMore ? result[result.length - 1].id : null,
   };
 }
@@ -77,22 +103,34 @@ export async function createComment(
   authorId: string,
   postId: string,
   content: string,
+  parentId?: string,
 ): Promise<CommentItem> {
   const post = await prisma.post.findFirst({
     where: { id: postId, isDeleted: false, isHidden: false },
-    select: { id: true },
+    select: { id: true, authorId: true },
   });
 
   if (!post) {
     throw new Error('게시글을 찾을 수 없습니다.');
   }
 
+  // Validate parentId if provided
+  if (parentId) {
+    const parent = await prisma.comment.findFirst({
+      where: { id: parentId, postId, isDeleted: false },
+    });
+    if (!parent) {
+      throw new Error('부모 댓글을 찾을 수 없습니다.');
+    }
+  }
+
   const [comment] = await prisma.$transaction([
     prisma.comment.create({
-      data: { authorId, postId, content },
+      data: { authorId, postId, content, parentId: parentId || null },
       select: {
         id: true,
         postId: true,
+        parentId: true,
         content: true,
         likeCount: true,
         createdAt: true,
@@ -104,7 +142,13 @@ export async function createComment(
     }),
   ]);
 
-  return { ...comment, isLiked: false, isOwner: true };
+  return {
+    ...comment,
+    isLiked: false,
+    isOwner: true,
+    isAdmin: false,
+    isPostAuthor: post.authorId === authorId,
+  };
 }
 
 export async function deleteComment(

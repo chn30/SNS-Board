@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { deleteComment } from '@/actions/comment.actions';
 import LikeButton from '@/components/LikeButton';
 import ReportModal from '@/components/ReportModal';
+import CommentInput from './CommentInput';
 
 const AVATAR_GRADIENTS = [
   'from-blue-500 to-cyan-500',
@@ -28,28 +29,41 @@ function timeAgo(date: string | Date): string {
 export interface CommentData {
   id: string;
   postId: string;
+  parentId?: string | null;
   content: string;
   likeCount: number;
   createdAt: string | Date;
   isLiked: boolean;
   isOwner: boolean;
+  isAdmin?: boolean;
+  isPostAuthor?: boolean;
+  replies?: CommentData[];
 }
 
 interface CommentItemProps {
   comment: CommentData;
   index: number;
+  depth?: number;
   onDeleted?: (commentId: string) => void;
+  onReplyAdded?: (comment: CommentData) => void;
 }
 
 export default function CommentItem({
   comment,
   index,
+  depth = 0,
   onDeleted,
+  onReplyAdded,
 }: CommentItemProps) {
   const gradient = AVATAR_GRADIENTS[index % AVATAR_GRADIENTS.length];
   const [isPending, startTransition] = useTransition();
   const [deleted, setDeleted] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [repliesExpanded, setRepliesExpanded] = useState(true);
+  const [localReplies, setLocalReplies] = useState<CommentData[]>(
+    comment.replies || [],
+  );
 
   if (deleted) return null;
 
@@ -64,24 +78,41 @@ export default function CommentItem({
     });
   }
 
+  function handleReplyAdded(newComment: CommentData) {
+    setLocalReplies((prev) => [...prev, newComment]);
+    setReplyOpen(false);
+    setRepliesExpanded(true);
+    onReplyAdded?.(newComment);
+  }
+
+  const canDelete = comment.isOwner || comment.isAdmin;
+  const hasReplies = localReplies.length > 0;
+
   return (
     <>
       <div
         data-testid="comment-item"
         className="glass rounded-xl p-4 transition-all duration-200"
+        style={{ marginLeft: depth > 0 ? Math.min(depth * 24, 72) : 0 }}
       >
         <div className="flex gap-3">
           {/* Avatar */}
           <div
             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${gradient} text-xs font-bold text-white`}
           >
-            익
+            {comment.isPostAuthor ? '글' : '익'}
           </div>
 
           <div className="min-w-0 flex-1">
             {/* Meta */}
             <div className="mb-1 flex items-center gap-2 text-xs">
-              <span className="font-medium text-text-secondary">익명</span>
+              <span className="font-medium text-text-secondary">
+                {comment.isPostAuthor ? (
+                  <span className="text-accent font-bold">글쓴이</span>
+                ) : (
+                  '익명'
+                )}
+              </span>
               <span className="text-text-muted">·</span>
               <span className="text-text-muted">
                 {timeAgo(comment.createdAt)}
@@ -104,7 +135,13 @@ export default function CommentItem({
                 initialLiked={comment.isLiked}
                 initialCount={comment.likeCount}
               />
-              {comment.isOwner && (
+              <button
+                onClick={() => setReplyOpen(!replyOpen)}
+                className="transition-colors hover:text-accent"
+              >
+                💬 답글
+              </button>
+              {canDelete && (
                 <button
                   data-testid="comment-delete"
                   onClick={handleDelete}
@@ -122,9 +159,55 @@ export default function CommentItem({
                 🚨
               </button>
             </div>
+
+            {/* Reply input */}
+            {replyOpen && (
+              <div className="mt-3">
+                <CommentInput
+                  postId={comment.postId}
+                  parentId={comment.id}
+                  onCommentAdded={handleReplyAdded}
+                  placeholder="답글을 입력하세요..."
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Replies toggle */}
+      {hasReplies && (
+        <div style={{ marginLeft: depth > 0 ? Math.min(depth * 24, 72) : 0 }}>
+          <button
+            onClick={() => setRepliesExpanded(!repliesExpanded)}
+            className="ml-4 mt-1 mb-1 text-xs text-accent hover:text-accent/80 transition-colors"
+          >
+            {repliesExpanded
+              ? `▼ 답글 ${localReplies.length}개 접기`
+              : `▶ 답글 ${localReplies.length}개 보기`}
+          </button>
+        </div>
+      )}
+
+      {/* Nested replies */}
+      {hasReplies && repliesExpanded && (
+        <div className="space-y-2">
+          {localReplies.map((reply, i) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              index={index + i + 1}
+              depth={depth + 1}
+              onDeleted={(id) => {
+                setLocalReplies((prev) => prev.filter((r) => r.id !== id));
+                onDeleted?.(id);
+              }}
+              onReplyAdded={onReplyAdded}
+            />
+          ))}
+        </div>
+      )}
+
       <ReportModal
         targetType="COMMENT"
         targetId={comment.id}

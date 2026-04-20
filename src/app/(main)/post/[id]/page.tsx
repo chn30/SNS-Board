@@ -25,6 +25,7 @@ export default async function PostDetailPage({ params }: PostDetailPageProps) {
     createdAt: string | Date;
     isLiked: boolean;
     isOwner?: boolean;
+    isAdmin?: boolean;
   };
 
   return <PostDetailClient post={post} />;

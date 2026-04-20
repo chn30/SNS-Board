@@ -6,12 +6,16 @@ import type { CommentData } from './CommentItem';
 
 interface CommentInputProps {
   postId: string;
+  parentId?: string;
   onCommentAdded?: (comment: CommentData) => void;
+  placeholder?: string;
 }
 
 export default function CommentInput({
   postId,
+  parentId,
   onCommentAdded,
+  placeholder = '댓글을 입력하세요...',
 }: CommentInputProps) {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
@@ -26,7 +30,11 @@ export default function CommentInput({
 
     startTransition(async () => {
       try {
-        const result = await createComment({ postId, content: text });
+        const result = await createComment({
+          postId,
+          content: text,
+          ...(parentId ? { parentId } : {}),
+        });
         if ('comment' in result && result.comment) {
           setContent('');
           onCommentAdded?.({
@@ -36,6 +44,7 @@ export default function CommentInput({
                 ? result.comment.createdAt
                 : new Date(result.comment.createdAt).toISOString(),
             isOwner: true,
+            replies: [],
           });
         } else if ('error' in result && result.error) {
           setError(result.error);
@@ -54,7 +63,7 @@ export default function CommentInput({
           type="text"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="댓글을 입력하세요..."
+          placeholder={placeholder}
           maxLength={2000}
           disabled={isPending}
           className="flex-1 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-text-primary placeholder-text-muted outline-none transition-all focus:border-[rgba(139,92,246,0.4)] focus:shadow-[0_0_12px_rgba(139,92,246,0.15)]"

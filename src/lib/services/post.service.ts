@@ -24,6 +24,7 @@ export interface PostListItem {
 
 export interface PostDetail extends PostListItem {
   isOwner: boolean;
+  isAdmin: boolean;
 }
 
 function calculatePopularScore(likeCount: number, createdAt: Date): number {
@@ -152,6 +153,7 @@ export async function getPosts(
 export async function getPost(
   id: string,
   userId?: string,
+  userRole?: string,
 ): Promise<PostDetail | null> {
   const post = await prisma.post.findFirst({
     where: { id, isDeleted: false, isHidden: false },
@@ -195,6 +197,7 @@ export async function getPost(
     viewCount: post.viewCount + 1,
     isLiked,
     isOwner: !!userId && post.authorId === userId,
+    isAdmin: userRole === 'ADMIN',
   };
 }
 

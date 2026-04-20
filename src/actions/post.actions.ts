@@ -22,7 +22,11 @@ function stripPost(post: postService.PostListItem | postService.PostDetail) {
     isLiked: post.isLiked,
   };
   if ('isOwner' in post) {
-    return { ...base, isOwner: post.isOwner };
+    return {
+      ...base,
+      isOwner: post.isOwner,
+      isAdmin: (post as any).isAdmin ?? false,
+    };
   }
   return base;
 }
@@ -55,7 +59,11 @@ export async function getPost(input: unknown) {
     return { error: '잘못된 요청입니다.' };
   }
 
-  const post = await postService.getPost(parsed.data.postId, user.id);
+  const post = await postService.getPost(
+    parsed.data.postId,
+    user.id,
+    user.role,
+  );
   if (!post) {
     return { error: '게시글을 찾을 수 없습니다.' };
   }
