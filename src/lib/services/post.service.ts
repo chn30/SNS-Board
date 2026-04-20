@@ -224,7 +224,7 @@ export async function createPost(
     },
   });
 
-  return { ...post, isLiked: false, isOwner: true };
+  return { ...post, isLiked: false, isOwner: true, isAdmin: false };
 }
 
 export async function deletePost(

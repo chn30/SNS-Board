@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import LeftPanel from '@/components/layout/LeftPanel';
 import RightPanel from '@/components/layout/RightPanel';
 
@@ -8,7 +9,9 @@ export default function MainLayout({
 }) {
   return (
     <div className="min-h-screen bg-background" data-testid="main-layout">
-      <LeftPanel />
+      <Suspense>
+        <LeftPanel />
+      </Suspense>
 
       {/* Main content area: left panel (280px) on xl, right panel (340px) on xl */}
       <main className="min-h-screen xl:ml-[280px] xl:mr-[340px]">

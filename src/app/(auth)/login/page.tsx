@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -55,7 +63,7 @@ export default function LoginPage() {
     >
       <div className="glass w-full max-w-md rounded-xl p-8">
         <h1 className="gradient-primary mb-6 bg-clip-text text-center text-2xl font-black text-transparent">
-          익명 게시판
+          AX Tech본부 Blind
         </h1>
         <p className="mb-8 text-center text-text-secondary">
           사내 SSO로 로그인하세요
