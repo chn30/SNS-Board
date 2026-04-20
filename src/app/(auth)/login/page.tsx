@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { signIn } from 'next-auth/react';
+import { loginAction } from '@/actions/login.actions';
 
 export default function LoginPage() {
   return (
@@ -34,25 +34,15 @@ function LoginContent() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      });
-
+      const result = await loginAction(formData);
       if (result?.error) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.');
+        setError(result.error);
         setLoading(false);
-      } else {
-        window.location.href = '/';
       }
     } catch {
-      setError('로그인에 실패했습니다. 다시 시도해주세요.');
-      setLoading(false);
+      // redirect on success throws, which is expected
     }
   }
 
